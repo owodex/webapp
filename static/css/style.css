@@ -994,12 +994,12 @@ I
 
 @media (max-width: 768px) {
     .footer-logo {
-        max-width: 150px;
+        max-width: 180px;
     }
 }
 
 @media (max-width: 576px) {
     .footer-logo {
-        max-width: 100px;
+        max-width: 160px;
     }
 }
