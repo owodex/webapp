@@ -1,0 +1,491 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+    <div class="py-2 bg-dark hero-header mb-5">
+        <div class="container my-5 py-5">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-8 text-center text-lg-start">
+                    <h1 class="display-3 text-white animated slideInLeft">Buy & Sell<br>Gift Cards and Crypto</h1>
+                    <p class="text-white animated slideInLeft mb-4 pb-2">Redeem your Gift cards for Naira and get the best rates for your Crypto assets.</p>
+                    <div class="d-lg-flex flex-column flex-sm-row justify-content-center justify-content-lg-start ">
+                        <a href="{% url 'signup' %}" class="btn btn-primary py-sm-3 px-sm-5 me-sm-4 mb-3 animated slideInLeft">Get Started</a>
+                        <a href="{% url 'support' %}" class="btn btn-outline-light py-sm-3 px-sm-5 animated slideInLeft">Contact Support</a>
+                    </div>
+                    <div class="mt-4">
+                        <small class="text-white fs-6"><i class="fa fa-gift text-white pe-3 fs-6"></i>Get ₦2,000 signup bonus</small>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center text-lg-end overflow-hidden">
+                    <div class="hero-image-container">
+                        {% comment %} <img class="hero-image" src="https://www.flipexapp.com/assets/images/landing/why-flip.png" alt="Hero Image"> {% endcomment %}
+                        <img class="hero-image img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.1s" src="{% static 'img/owodex-hero.png' %}" style="max-height: 1300px; object-fit: contain;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Navbar & Hero End -->
+
+<!-- Logo Carousel Start -->
+<div class="container-fluid wow fadeInUp" data-wow-delay="0.1s">
+    <div class="container my-5">
+        <div class="owl-carousel logo-carousel">
+            <div class="item">
+                <img src="{% static 'img/visa-logo.png' %}" alt="Visa" class="partner-logo">
+            </div>
+            <div class="item">
+                <img src="{% static 'img/mastercard-logo.svg' %}" alt="Mastercard" class="partner-logo">
+            </div>
+            <div class="item">
+                <img src="{% static 'img/amazon-logo.jpg' %}" alt="Amazon" class="partner-logo">
+            </div>
+            <div class="item">
+                <img src="{% static 'img/coinbase-logo.png' %}" alt="Coinbase" class="partner-logo">
+            </div>
+            <div class="item">
+                <img src="{% static 'img/paystack-logo.png' %}" alt="Paystack" class="partner-logo">
+            </div>
+            <!-- Add more logos as needed -->
+        </div>
+    </div>
+</div>
+<!-- Logo Carousel End -->
+
+<!-- Service Start -->
+<div class="container-xxl py-5">
+    <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+        <h2 class="mb-5">Our Top Offerings</h2>
+    </div>
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4 col-sm-12 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="service-item rounded pt-3">
+                    <div class="p-4 text-center">
+                        <i class="fa fa-3x fa-gift text-primary my-5"></i>
+                        <h5>Gift Cards</h5>
+                        <p>Enjoy the highest rates in Nigeria on all Gift Cards you sell to us on Owodex.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-sm-12 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="service-item rounded pt-3">
+                    <div class="p-4 text-center">
+                        <i class="fa fa-3x fa-coins text-primary my-5"></i>
+                        <h5>Crypto</h5>
+                        <p>Buy and Sell your Crypto at the best possible rate, only on Owodex.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-sm-12 wow fadeInUp" data-wow-delay="0.5s">
+                <div class="service-item rounded pt-3">
+                    <div class="p-4 text-center">
+                        <i class="fa fa-3x fa-file-invoice text-primary my-5"></i>
+                        <h5>Bills Payment</h5>
+                        <p>Pay Cable TV Subscription, Top-up Airtime, Buy Data Subscription, and others bills.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Service End -->
+
+    <!-- Why Choose Us Start -->
+    <div class="container-fluid py-5" style="background-color: #0F172B;">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-12 text-start">
+                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.1s" src="{% static 'img/why-owodex.png' %}" style="max-height: 600px; object-fit: contain;">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+                    <h5 class="section-title ff-secondary text-center text-primary fw-normal">Why Choose Us</h5>
+                    <h1 class="mb-5 text-white">Reasons to Choose Owodex</h1>
+                </div>
+                <div class="wow fadeInUp" data-wow-delay="0.2s">
+                    <ul class="list-unstyled">
+                        <li class="d-flex mb-5">
+                            <i class="fas fa-check-circle text-primary me-3 mt-1" style="font-size: 24px;"></i>
+                            <div>
+                                <h5 class="text-white">Best Rates</h5>
+                                <p class="text-white">We offer the most competitive rates for gift card and crypto trading in Nigeria.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex mb-5">
+                            <i class="fas fa-bolt text-primary me-3 mt-1" style="font-size: 24px;"></i>
+                            <div>
+                                <h5 class="text-white">Fast Transactions</h5>
+                                <p class="text-white">Our transactions are swift and efficient, ensuring you get your money quickly.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex">
+                            <i class="fas fa-shield-alt text-primary me-3 mt-1" style="font-size: 24px;"></i>
+                            <div>
+                                <h5 class="text-white">Secure Platform</h5>
+                                <p class="text-white">Your security is our priority. We use advanced encryption to protect your transactions.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Why Choose Us End -->
+
+<!-- About Start -->
+<div class="container-xxl py-5">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <div class="row g-3">
+                    <div class="col-6 text-start">
+                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.1s" src="{% static 'img/amazon.png' %}">
+                    </div>
+                    <div class="col-6 text-start">
+                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.3s" src="{% static 'img/amex.png' %}" style="margin-top: 25%;">
+                    </div>
+                    <div class="col-6 text-end">
+                        <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.5s" src="{% static 'img/google.png' %}">
+                    </div>
+                    <div class="col-6 text-end">
+                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.7s" src="{% static 'img/ebay.png' %}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h1 class="mb-4">Welcome to <i class="fa fa-utensils text-primary me-2"></i>Owodex</h1>
+                <p class="mb-4">At Owodex, we pride ourselves on offering a vast array of gift cards from popular brands worldwide. Whether you're looking for Amazon, iTunes, Google Play, or any other major retailer, we've got you covered.</p>
+                <p class="mb-4">Experience lightning-fast transactions with Owodex's cutting-edge platform. Our optimized system boasts incredibly short loading times, allowing you to buy, sell, or trade gift cards in a matter of seconds.</p>
+                <div class="row g-4 mb-4">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center border-start border-5 border-primary px-3">
+                            <h1 class="flex-shrink-0 display-5 text-primary mb-0" data-toggle="counter-up">10</h1>
+                            <div class="ps-4">
+                                <p class="mb-0">Mins of</p>
+                                <h6 class="text-uppercase mb-0">Loading time</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center border-start border-5 border-primary px-3">
+                            <h1 class="flex-shrink-0 display-5 text-primary mb-0" data-toggle="counter-up">82</h1>
+                            <div class="ps-4">
+                                <p class="mb-0">Popular</p>
+                                <h6 class="text-uppercase mb-0">Gift Cards</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'signup' %}" class="btn btn-primary py-3 px-5">Start Trading Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- About End -->
+
+
+<!-- Menu Start -->
+{% comment %} <div class="container-xxl py-5">
+    <div class="container">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Our Services</h5>
+            <h1 class="mb-5">Why Trade with Us?</h1>
+        </div>
+        <div class="tab-class text-center wow fadeInUp" data-wow-delay="0.1s">
+            <ul class="nav nav-pills d-inline-flex justify-content-center border-bottom mb-5">
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 ms-0 pb-3 active" data-bs-toggle="pill" href="#tab-1">
+                        <i class="fa fa-coffee fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Popular</small>
+                            <h6 class="mt-n1 mb-0">Breakfast</h6>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 pb-3" data-bs-toggle="pill" href="#tab-2">
+                        <i class="fa fa-hamburger fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Special</small>
+                            <h6 class="mt-n1 mb-0">Launch</h6>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="d-flex align-items-center text-start mx-3 me-0 pb-3" data-bs-toggle="pill" href="#tab-3">
+                        <i class="fa fa-utensils fa-2x text-primary"></i>
+                        <div class="ps-3">
+                            <small class="text-body">Lovely</small>
+                            <h6 class="mt-n1 mb-0">Dinner</h6>
+                        </div>
+                    </a>
+                </li>
+            </ul> {% endcomment %}
+            
+            {% comment %} <!-- Two Column Section Start -->
+            <div class="container-xxl py-5">
+                <div class="container">
+                    <div class="row g-5 align-items-center">
+                        <!-- Left Column: Heading, Description, and Button -->
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.1s">
+                            <h1 class="mb-4">Experience Seamless Trading with Owodex</h1>
+                            <p class="mb-4">At Owodex, we provide a user-friendly platform for all your gift card and cryptocurrency trading needs. Our cutting-edge technology ensures fast, secure, and efficient transactions, giving you the best value for your trades.</p>
+                            <a href="#" class="btn btn-primary py-3 px-5">Start Trading Now</a>
+                        </div>
+                        
+                        <!-- Right Column: Image Carousel -->
+                        <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.5s">
+                            <div class="owl-carousel image-carousel">
+                                <div class="carousel-item">
+                                    <img class="img-fluid rounded" src="https://www.flipexapp.com/assets/images/landing/amazon.png" alt="Trading Platform">
+                                </div>
+                                <div class="carousel-item">
+                                    <img class="img-fluid rounded" src="https://www.flipexapp.com/assets/images/landing/amazon.png" alt="Gift Cards">
+                                </div>
+                                <div class="carousel-item">
+                                    <img class="img-fluid rounded" src="https://www.flipexapp.com/assets/images/landing/amazon.png" alt="Cryptocurrency">
+                                </div>
+                                <!-- Add more carousel items as needed -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Two Column Section End -->
+
+        </div>
+    </div>
+</div> {% endcomment %}
+<!-- Menu End -->
+
+
+<!-- Reservation Start -->
+<div class="container py-5 px-0 wow fadeInUp" data-wow-delay="0.1s" style="background-color: #0F172B;">
+    <div class="container">
+        <div class="row g-0 px-3">
+            <div class="col-md-6">
+                <div class="video">
+                    <button type="button" class="btn-play" data-bs-toggle="modal" data-src="https://www.youtube.com/embed/DWRcNpR6Kdc" data-bs-target="#videoModal">
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6 bg-dark d-flex align-items-center pt-3">
+                <div class="pb-5 px-5 wow fadeInUp" data-wow-delay="0.2s">
+                    <h1 class="text-white mb-3">Get ₦2,000 Signup Bonus</h1>
+
+                    <p class="text-white py-3">Zero Hidden Fees + Super Fast Transactions - Our guaranteed winning combo at Owodex.</p>
+
+                    <div class="col-12 py-5 text-center">
+                        <a href="{% url 'signup' %}"><button class="btn btn-primary w-50 py-3" type="submit">Get Started</button></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Youtube Video</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 16:9 aspect ratio -->
+                    <div class="ratio ratio-16x9">
+                        <iframe class="embed-responsive-item" src="" id="video" allowfullscreen allowscriptaccess="always"
+                            allow="autoplay"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Reservation Start -->
+
+
+<!-- Team Start -->
+{% comment %} <div class="container-xxl pt-5 pb-3">
+    <div class="container">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Team Members</h5>
+            <h1 class="mb-5">Our Master Chefs</h1>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="team-item text-center rounded overflow-hidden">
+                    <div class="rounded-circle overflow-hidden m-4">
+                        <img class="img-fluid" src="{% static 'img/team-1.jpg' %}" alt="">
+                    </div>
+                    <h5 class="mb-0">Full Name</h5>
+                    <small>Designation</small>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="team-item text-center rounded overflow-hidden">
+                    <div class="rounded-circle overflow-hidden m-4">
+                        <img class="img-fluid" src="{% static 'img/team-2.jpg' %}" alt="">
+                    </div>
+                    <h5 class="mb-0">Full Name</h5>
+                    <small>Designation</small>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
+                <div class="team-item text-center rounded overflow-hidden">
+                    <div class="rounded-circle overflow-hidden m-4">
+                        <img class="img-fluid" src="{% static 'img/team-3.jpg' %}" alt="">
+                    </div>
+                    <h5 class="mb-0">Full Name</h5>
+                    <small>Designation</small>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.7s">
+                <div class="team-item text-center rounded overflow-hidden">
+                    <div class="rounded-circle overflow-hidden m-4">
+                        <img class="img-fluid" src="{% static 'img/team-4.jpg' %}" alt="">
+                    </div>
+                    <h5 class="mb-0">Full Name</h5>
+                    <small>Designation</small>
+                    <div class="d-flex justify-content-center mt-3">
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-facebook-f"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-twitter"></i></a>
+                        <a class="btn btn-square btn-primary mx-1" href=""><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> {% endcomment %}
+<!-- Team End -->
+
+
+<!-- Testimonial Start -->
+<div class="container-xxl py-5 wow fadeInUp" data-wow-delay="0.1s">
+    <div class="container">
+        <div class="text-center">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Testimonial</h5>
+            <h2 class="mb-5">Why Join Owodex?</h2>
+        </div>
+        <div class="owl-carousel testimonial-carousel">
+            <div class="testimonial-item bg-transparent border rounded p-4">
+                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
+                <p>Owodex is the best platform to sell gift card in Nigeria. They've got the best rate and pay very fast too ❤️️</p>
+                <div class="d-flex align-items-center">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-1.jpg' %}" style="width: 50px; height: 50px;">
+                    <div class="ps-3">
+                        <h5 class="mb-1">Pamilerin Adekunle</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-item bg-transparent border rounded p-4">
+                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
+                <p>My experience with Owodex has been very positive. I get gift cards as payment from my foreign job and I trade them very easily</p>
+                <div class="d-flex align-items-center">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-2.jpg' %}" style="width: 50px; height: 50px;">
+                    <div class="ps-3">
+                        <h5 class="mb-1">Emmanuel Johnson</h5>
+                    
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-item bg-transparent border rounded p-4">
+                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
+                <p>I am very happy I came across Owodex. They have never failed me, all transactions have been successful and swift😍</p>
+                <div class="d-flex align-items-center">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-3.jpg' %}" style="width: 50px; height: 50px;">
+                    <div class="ps-3">
+                        <h5 class="mb-1">Divine Osakube</h5>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-item bg-transparent border rounded p-4">
+                <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
+                <p>Owodex is the best crypto trading platform I have ever used. They pay super fast and have the highest rates too. Big ups them!</p>
+                <div class="d-flex align-items-center">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-4.jpg' %}" style="width: 50px; height: 50px;">
+                    <div class="ps-3">
+                        <h5 class="mb-1">Tobe Nwabueze</h5>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Testimonial End -->
+
+<!-- Blog Carousel Start -->
+{% comment %} <div class="container-xxl py-5">
+    <div class="container">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Our Blog</h5>
+            <h1 class="mb-5">Latest Blog Posts</h1>
+        </div>
+        <div class="position-relative">
+            <div class="owl-nav blog-carousel-nav">
+                <button type="button" role="presentation" class="owl-prev"><i class="fa fa-arrow-left"></i></button>
+                <button type="button" role="presentation" class="owl-next"><i class="fa fa-arrow-right"></i></button>
+            </div>
+            <div class="owl-carousel blog-carousel wow fadeInUp" data-wow-delay="0.1s">
+                <div class="blog-item">
+                    <div class="position-relative overflow-hidden">
+                        <img class="img-fluid" src="{% static 'img/team-1.jpg' %}" alt="">
+                    </div>
+                    <div class="bg-light p-4">
+                        <h5 class="mb-3">Blog Post Title 1</h5>
+                        <p>Short description of the blog post goes here...</p>
+                        <a href="" class="btn btn-primary py-2 px-4">Read More</a>
+                    </div>
+                </div>
+                <div class="blog-item">
+                    <div class="position-relative overflow-hidden">
+                        <img class="img-fluid" src="{% static 'img/team-2.jpg' %}" alt="">
+                    </div>
+                    <div class="bg-light p-4">
+                        <h5 class="mb-3">Blog Post Title 2</h5>
+                        <p>Short description of the blog post goes here...</p>
+                        <a href="" class="btn btn-primary py-2 px-4">Read More</a>
+                    </div>
+                </div>
+                <div class="blog-item">
+                    <div class="position-relative overflow-hidden">
+                        <img class="img-fluid" src="{% static 'img/team-3.jpg' %}" alt="">
+                    </div>
+                    <div class="bg-light p-4">
+                        <h5 class="mb-3">Blog Post Title 3</h5>
+                        <p>Short description of the blog post goes here...</p>
+                        <a href="" class="btn btn-primary py-2 px-4">Read More</a>
+                    </div>
+                </div>
+                <!-- Add more blog items as needed -->
+            </div>
+        </div>
+    </div>
+</div> {% endcomment %}
+<!-- Blog Carousel End -->
+
+{% endblock%}

@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+<!-- Hero Section Start -->
+<div class="container-fluid py-5 bg-dark hero-header">
+    <div class="container my-5 py-5">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-lg-6 text-center">
+                <h2 class="display-3 text-white animated slideInDown">Rate Calculator</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Hero Section End -->
+
+<!-- Calculator Card Start -->
+<div class="container-fluid py-5 position-relative">
+    <div class="container rate-calculator-container">
+        <div class="row justify-content-center">
+                <div class="rate-calculator-card">
+                    <h3 class="rate-calculator-title">Calculate Your Rate</h3>
+                    <form id="rateCalculatorForm">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="rate-calculator-input">
+                                    <label for="selectCard" class="form-label">Select Card</label>
+                                    <select class="form-select" id="selectCard">
+                                        <option selected>Choose a card...</option>
+                                        <option value="1">Card 1</option>
+                                        <option value="2">Card 2</option>
+                                        <option value="3">Card 3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="rate-calculator-input">
+                                    <label for="selectCurrency" class="form-label">Select Currency</label>
+                                    <select class="form-select" id="selectCurrency">
+                                        <option selected>Choose a currency...</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-lg-6">
+                                <div class="rate-calculator-input">
+                                    <label for="selectCardType" class="form-label">Select Card Type</label>
+                                    <select class="form-select" id="selectCardType">
+                                        <option selected>Choose a card type...</option>
+                                        <option value="1">Type 1</option>
+                                        <option value="2">Type 2</option>
+                                        <option value="3">Type 3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="rate-calculator-input">
+                                    <label for="selectDenomination" class="form-label">Select Denomination</label>
+                                    <select class="form-select" id="selectDenomination">
+                                        <option selected>Choose a denomination...</option>
+                                        <option value="10">$10</option>
+                                        <option value="25">$25</option>
+                                        <option value="50">$50</option>
+                                        <option value="100">$100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="rate-calculator-input">
+                                    <label for="enterAmount" class="form-label">Enter Amount ($)</label>
+                                    <input type="number" class="form-control" id="enterAmount" placeholder="Enter amount">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="submit" class="rate-calculator-button">Calculate Rate</button>
+                        </div>
+                    </form>
+                    <div id="calculationResult" class="rate-calculator-result mt-3"></div>
+                </div>
+        </div>
+    </div>
+</div>
+<!-- Calculator Card End -->
+
+<!-- Image Cards Start -->
+<div class="container-fluid py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <img src="https://www.flipexapp.com/_next/static/media/exchange-giftcard.f8f9ec7e.png" class="card-img-top" alt="Image 1" style="object-fit: cover; height: 500px;">
+                    <div class="card-body">
+                        <h3 class="card-title">Giftcards</h3>
+                        <p class="card-text">Exchange your gift cards for instant cash at competitive rates, with support for a wide range of popular brands.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <img src="https://www.flipexapp.com/_next/static/media/exchange-crypto.d8d3fab2.png" class="card-img-top" alt="Image 2" style="object-fit: cover; height: 500px;">
+                    <div class="card-body">
+                        <h3 class="card-title">Crypto</h3>
+                        <p class="card-text">Buy, sell, and trade cryptocurrencies securely with real-time market rates and fast transaction processing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Image Cards End -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('rateCalculatorForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Add your rate calculation logic here
+        document.getElementById('calculationResult').innerHTML = 'Calculation result will be shown here.';
+    });
+</script>
+{% endblock %}
