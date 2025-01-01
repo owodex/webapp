@@ -987,3 +987,19 @@ I
     background-color: transparent !important;
 }
 
+.footer-logo {
+    max-width: 200px;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .footer-logo {
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 576px) {
+    .footer-logo {
+        max-width: 100px;
+    }
+}
