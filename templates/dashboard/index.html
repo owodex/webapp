@@ -1,0 +1,103 @@
+{% extends 'dashboard/main.html'%}
+{% load static %}
+
+<!-- Main content area -->
+{% block maincontent %}        
+<div class="container-fluid dashboard-area">
+    <div class="container dashboard">
+        <div class="row">
+            <!-- Main content -->
+            <div class="col-lg-8">
+                <!-- Wallet balance -->
+                <div class="card wallet-balance-card mb-5">
+                    <h5 class="card-title">Wallet Balance</h5>
+                    <div class="wallet-balance-amount">
+                        <span id="balanceAmount">₦50,000.00</span>
+                        <i class="fas fa-eye" id="toggleBalance"></i>
+                    </div>
+                    <div class="signup-bonus">
+                        <i class="fas fa-gift"></i> ₦2,000 signup bonus. <a href="{% url 'bonus' %}" class="activate-bonus">Activate</a>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary me-2"><i class="fas fa-exchange-alt"></i> Transfer</button>
+                        <button class="btn btn-secondary"><i class="fas fa-wallet"></i> Withdraw</button>
+                    </div>
+                </div>
+                <!-- Recent transactions -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Transactions</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2023-05-01</td>
+                                    <td>Giftcard Purchase</td>
+                                    <td>-$50.00</td>
+                                </tr>
+                                <tr>
+                                    <td>2023-04-30</td>
+                                    <td>Bill Payment</td>
+                                    <td>-$100.00</td>
+                                </tr>
+                                <tr>
+                                    <td>2023-04-29</td>
+                                    <td>Deposit</td>
+                                    <td>+$200.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Image cards -->
+                <div class="card mb-4">
+                    <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_1.png" class="card-img-top" alt="Giftcard Promo">
+                    <div class="card-body">
+                        <h5 class="card-title">Special Giftcard Offer</h5>
+                        
+                    </div>
+                </div>
+                <div class="card">
+                    <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_2.png" class="card-img-top" alt="Bill Payment">
+                    <div class="card-body">
+                        <h5 class="card-title">Easy Bill Payments</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+  
+{% endblock %}
+
+{% block extra_js%}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const balanceAmount = document.getElementById('balanceAmount');
+        const toggleBalance = document.getElementById('toggleBalance');
+        let isHidden = false;
+
+        toggleBalance.addEventListener('click', function() {
+            if (isHidden) {
+                balanceAmount.textContent = '₦50,000.00';
+                toggleBalance.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                balanceAmount.textContent = '₦••••••••';
+                toggleBalance.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+            isHidden = !isHidden;
+        });
+    });
+</script>
+{% endblock %}
+    

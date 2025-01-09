@@ -1,0 +1,122 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .bonus-card {
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .bonus-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 4.9rem;
+    }
+    .total-bonus {
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 0.2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        width: 100%;
+        max-width: 200px;
+    }
+    .total-bonus-heading {
+        font-size: 1.1rem;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 0.6rem;
+    }
+    .total-bonus-amount {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #000;
+    }
+    .all-bonuses-heading {
+        align-self: flex-start;
+    }
+    .bonus-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #e0e0e0;
+        margin-bottom: 2.2rem;
+    }
+    .bonus-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .bonus-info {
+        display: flex;
+        align-items: center;
+    }
+    .bonus-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        color:#FEAF39;
+    }
+    .bonus-details h5 {
+        margin-bottom: 0.25rem;
+    }
+    .bonus-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .btn-bonus {
+        padding: 0.9rem 1.5rem;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block maincontent %}
+<div class="container-fluid dashboard-area">
+    <div class="container dashboard">
+        <div class="bonus-card">
+            <div class="bonus-header mb-5">
+                <div class="total-bonus">
+                    <div class="total-bonus-heading">Total Bonus</div>
+                </div>
+                <div class="total-bonus-amount">₦2,000.00</div>
+            </div>
+
+            <h2 class="all-bonuses-heading mb-4">All Bonuses</h2>
+
+            <div class="bonus-item">
+                <div class="bonus-info">
+                    <div class="bonus-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="bonus-details">
+                        <h5 class="mb-0">Sign Up Bonus</h5>
+                        <span class="bonus-amount fw-bolder">₦2,000</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-bonus">Redeem</button>
+            </div>
+            
+            <div class="bonus-item">
+                <div class="bonus-info">
+                    <div class="bonus-icon">
+                        <i class="fas fa-user-friends"></i>
+                        <i class="fas fa-fire" style="color: #ff6b6b; font-size: 1rem; position: absolute; margin-left: -0.5rem; margin-top: -0.5rem;"></i>
+                    </div>
+                    <div class="bonus-details">
+                        <h5 class="mb-0">Referral Bonus</h5>
+                        <span class="bonus-amount">₦0.00</span>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-bonus">View All</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <img id="giftcardImage" alt="Gift Card" class="img-fluid" style="max-height: 200px;">
+                    </div>
+                    <form id="tradeGiftcardForm">
+                        <!-- Form fields will be dynamically inserted here -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const giftcardName = urlParams.get('name');
+    const giftcardImage = urlParams.get('image');
+
+    // Set the gift card image
+    const giftcardImageElement = document.getElementById('giftcardImage');
+    giftcardImageElement.src = `{% static 'img/giftcards/' %}${giftcardImage}`;
+    giftcardImageElement.alt = `${giftcardName} Gift Card`;
+
+    // Form fields configuration
+    const formFields = [
+        {
+            type: 'select',
+            id: 'giftCardCurrency',
+            label: 'Gift Card Currency',
+            options: [
+                { value: '', text: 'Select Currency' },
+                { value: 'us', text: '🇺🇸 United States' },
+                { value: 'gb', text: '🇬🇧 United Kingdom' },
+                { value: 'ca', text: '🇨🇦 Canada' }
+            ]
+        },
+        {
+            type: 'select',
+            id: 'giftCardType',
+            label: 'Gift Card Type',
+            options: [
+                { value: '', text: 'Select Type' },
+                { value: 'ecode', text: 'E-code' },
+                { value: 'physical', text: 'Physical' }
+            ]
+        },
+        {
+            type: 'select',
+            id: 'denomination',
+            label: 'Denomination',
+            options: [
+                { value: '', text: 'Select Denomination' },
+                { value: '25', text: '$25' },
+                { value: '50', text: '$50' },
+                { value: '100', text: '$100' }
+            ]
+        },
+        {
+            type: 'number',
+            id: 'amount',
+            label: 'Enter Amount',
+            placeholder: '0.00',
+            prefix: '$'
+        },
+        {
+            type: 'file',
+            id: 'giftCardImages',
+            label: 'Upload Gift Card Images',
+            accept: 'image/*',
+            multiple: true
+        }
+    ];
+
+    const form = document.getElementById('tradeGiftcardForm');
+
+    // Function to create form fields
+    function createFormField(field) {
+        const div = document.createElement('div');
+        div.className = 'mb-4'; // Increased margin between fields
+
+        const label = document.createElement('label');
+        label.htmlFor = field.id;
+        label.className = 'form-label';
+        label.textContent = field.label;
+
+        div.appendChild(label);
+
+        if (field.type === 'select') {
+            const select = document.createElement('select');
+            select.id = field.id;
+            select.className = 'form-select form-select-lg'; // Larger select input
+
+            field.options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.text;
+                select.appendChild(optionElement);
+            });
+
+            div.appendChild(select);
+        } else if (field.type === 'file') {
+            const fileInputContainer = document.createElement('div');
+            fileInputContainer.className = 'file-input-container';
+        
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.id = field.id;
+            input.className = 'form-control form-control-lg'; // Larger input
+            input.accept = field.accept;
+            input.multiple = field.multiple;
+            input.style.display = 'none';
+        
+            const customFileUpload = document.createElement('div');
+            customFileUpload.className = 'custom-file-upload';
+            customFileUpload.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose Files';
+        
+            const fileList = document.createElement('div');
+            fileList.id = 'fileList';
+            fileList.className = 'mt-2';
+        
+            input.addEventListener('change', function(e) {
+                fileList.innerHTML = '';
+                for (let i = 0; i < this.files.length; i++) {
+                    const fileName = document.createElement('p');
+                    fileName.textContent = this.files[i].name;
+                    fileList.appendChild(fileName);
+                }
+            });
+        
+            customFileUpload.addEventListener('click', () => input.click());
+        
+            fileInputContainer.appendChild(customFileUpload);
+            fileInputContainer.appendChild(fileList);
+        
+            div.appendChild(input);
+            div.appendChild(fileInputContainer);
+        }
+
+        return div;
+    }
+
+    // Create and append form fields
+    formFields.forEach(field => {
+        form.appendChild(createFormField(field));
+    });
+
+    // Add submit button
+    const submitButton = document.createElement('button');
+    submitButton.type = 'submit';
+    submitButton.className = 'btn btn-primary btn-lg w-100'; // Larger button
+    submitButton.textContent = 'Trade Gift Card';
+    form.appendChild(submitButton);
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Add your form submission logic here
+        console.log('Form submitted');
+    });
+
+    // Add custom styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .custom-file-upload {
+            border: 2px dashed #ccc;
+            display: inline-block;
+            padding: 20px 50px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+        }
+        .custom-file-upload i {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        #fileList p {
+            margin-bottom: 5px;
+        }
+        .file-input-container {
+        margin-top: 10px;
+    }
+
+    .custom-file-upload {
+        border: 2px dashed #ccc;
+        display: block;
+        padding: 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 18px;
+        transition: all 0.3s;
+    }
+    .custom-file-upload:hover {
+        background-color: #f8f9fa;
+        border-color: #0d6efd;
+    }
+    .custom-file-upload i {
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    #fileList {
+        margin-top: 10px;
+    }
+    #fileList p {
+        margin-bottom: 5px;
+    }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

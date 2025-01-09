@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="py-5 bg-dark hero-header mb-5">
+    <div class="container text-center my-5 pt-5 pb-4">
+        <h1 class="display-3 text-white mb-3 animated slideInDown">Terms of Service</h1>
+    </div>
+</div>
+
+<div class="container-xxl terms py-5">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-12">
+                <h2 class="mb-4">Terms of Service for Owodex</h2>
+                <p>Last updated: {% now "F d, Y" %}</p>
+
+                <h4 class="mt-4">1. General Terms</h4>
+                <p>OWODEX DIGITAL TECHNOLOGIES (ODT), also known as OWODEX, undertakes to use the virtual accounts provided by the Bank solely for the purposes outlined in this Agreement. ODT makes no assurances or guarantees regarding the profitability of transactions carried out on its platform. All transactions conducted on OWODEX are strictly between you and OWODEX, with no involvement or interference from the Bank.</p>
+
+                <h4 class="mt-4">2. Liability</h4>
+                <p>The Bank shall not be held liable for any loss of profit or investment arising from transactions carried out on the Bank's infrastructure, except in cases of willful negligence by the Bank. For clarity, OWODEX shall prominently display this disclaimer on its website and within relevant agreements where virtual accounts are used for transactions. This indemnity shall remain in effect, and users must adhere strictly to all applicable rules.</p>
+
+                <h4 class="mt-4">3. Data Protection</h4>
+                <p>OWODEX is committed to protecting your personal information in compliance with the Nigerian Data Protection Regulation (NDPR), 2019. By using our services, you consent to OWODEX sharing necessary information, including personal data, with the Bank for transaction administration and operational purposes. OWODEX operates on a non-exclusive basis, allowing both parties to engage freely with additional clients, individuals, or businesses at their discretion.</p>
+
+                <h4 class="mt-4">4. User Agreements</h4>
+                <p>By registering and opening an account with OWODEX, you unconditionally agree to abide by these terms:</p>
+                <ul>
+                    <li>You must not use OWODEX's products or services for illegal activities.</li>
+                    <li>Information on our website does not constitute legal, financial, or professional advice.</li>
+                    <li>You accept all risks associated with your decisions on OWODEX, and OWODEX shall not be liable for resulting losses.</li>
+                    <li>False or misleading information provided during registration or account usage may result in account termination.</li>
+                    <li>You consent to receive correspondence from OWODEX through email, SMS, app notifications, social media, or other channels.</li>
+                    <li>You are responsible for safeguarding your account credentials, including passwords and PINs.</li>
+                    <li>Sharing, selling, or otherwise misusing your account details is strictly prohibited.</li>
+                    <li>OWODEX reserves the right to request additional identification documents for verification.</li>
+                </ul>
+
+                <h4 class="mt-4">5. Acceptance and Change of Terms</h4>
+                <p>If you disagree with any part of these Terms, you should not use OWODEX's website, app, or services. By accessing or using OWODEX, you acknowledge and accept these terms. OWODEX reserves the right to update or modify these Terms at any time without prior notice. Significant changes will be communicated via your registered email address. Your continued use of OWODEX constitutes acceptance of any updates.</p>
+
+                <h4 class="mt-4">6. Transactions</h4>
+                <p>The confirmation of bills payment transactions (e.g., cable and electricity) depends on their respective networks. OWODEX bears no responsibility for losses arising from protocol errors, delays, or other network-related issues. OWODEX cannot cancel or reverse bills payment transactions. Users must ensure accuracy in unique ID, transaction amounts, and recipient details.</p>
+                <p>Trade orders placed on OWODEX are binding and cannot be canceled or reversed. You must ensure that gift cards traded on OWODEX are lawfully acquired. OWODEX does not guarantee uninterrupted platform availability and is not liable for losses arising from system downtimes.</p>
+
+                <h4 class="mt-4">7. Investigations</h4>
+                <p>OWODEX reserves the right to investigate suspected violations of these Terms. We may suspend accounts, remove content, or request additional information if we believe a violation has occurred.</p>
+
+                <h4 class="mt-4">8. Account Monitoring, Suspension, and Termination</h4>
+                <p>OWODEX may suspend or terminate accounts under the following circumstances:</p>
+                <ul>
+                    <li>Evidence of Terms of Service violations.</li>
+                    <li>Suspected fraudulent or illegal activities.</li>
+                    <li>Submission of false or misleading information.</li>
+                    <li>Failure to respond to verification requests.</li>
+                </ul>
+                <p>Valid payment details must be provided via authorized OWODEX channels. Payments made through unauthorized channels will be considered violations of these Terms.</p>
+
+                <h2 class="mt-4">Prohibited Activities</h2>
+        <p>At Owodex, we value trust, security, and transparency. To maintain a safe environment for everyone, the following activities are strictly prohibited:</p>
+        <ul>
+            <li>Collecting user data without proper authorization.</li>
+            <li>Tampering with, reverse-engineering, or attempting to exploit platform vulnerabilities.</li>
+            <li>Misrepresenting your identity or using false credentials.</li>
+            <li>Sharing your account credentials with unauthorized parties.</li>
+            <li>Engaging in any form of fraudulent or illegal activities.</li>
+        </ul>
+        <p>By respecting these rules, you’re helping us create a secure platform for all users.</p>
+
+        <h4 class="mt-4">AML Policy</h4>
+        <p>At Owodex, we are deeply committed to fighting financial crimes, including money laundering and terrorist financing. Our Anti-Money Laundering (AML) policies are designed to align with Nigerian regulations, such as the <em>Money Laundering (Prohibition) Act, 2011</em> and the <em>Terrorism Prevention Act, 2011</em>.</p>
+        <p>Here’s how we ensure compliance:</p>
+        <ul>
+            <li><strong>Compliance Officer:</strong> Oversees daily adherence to AML laws and keeps stakeholders informed of any issues.</li>
+            <li><strong>Risk Committee:</strong> Regularly reviews and addresses risks related to financial crimes.</li>
+            <li><strong>Internal Controls:</strong> Implements robust measures to detect and prevent suspicious activities.</li>
+            <li><strong>Know Your Customer (KYC):</strong> Verifies customer identities, ensures accurate records, and applies enhanced checks for higher-risk accounts.</li>
+        </ul>
+        <p>We are vigilant about identifying and reporting suspicious activities, such as false identification, inconsistent information, or links to illegal activities. If flagged, these will be promptly reported to the appropriate authorities.</p>
+        <p>By using Owodex, you agree to follow these guidelines. Staying informed and compliant ensures a secure and trustworthy experience for everyone.</p>
+    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

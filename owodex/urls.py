@@ -26,4 +26,18 @@ urlpatterns = [
     path('signup/', signup, name ='signup'),
     path('login/', login, name ='login'),
     path('rate-calculator/', rate_calculator, name ='rate_calculator'),
+    path('terms/', terms, name ='terms'),
+    path('privacy_policy/', privacy_policy, name ='privacy_policy'),
+    path('dashboard/', dashboard, name ='dashboard'),
+    path('services/', services, name ='services'),
+    path('transactions/', transactions, name ='transactions'),
+    path('profile/', profile, name ='profile'),
+    path('settings/', settings, name ='settings'),
+    path('logout/', logout, name ='logout'),
+    path('giftcards/', giftcards, name ='giftcards'),
+    path('pay_bills/', pay_bills, name ='pay_bills'),
+    path('airtime_data/', airtime_data, name ='airtime_data'),
+    path('bonus/', bonus, name ='bonus'),
+    path('trade_giftcard/', trade_giftcard, name ='trade_giftcard'),
+
 ]

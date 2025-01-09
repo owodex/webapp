@@ -1,0 +1,151 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .content-card {
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .btn-lg {
+        width: 150px !important;
+        padding: 12px 0;
+        font-size: 1.1rem;
+        margin-right: 10px;
+    }
+    .form-control, .form-select {
+        height: 60px;
+        font-size: 1.3rem;
+    }
+    .mb-4 {
+        margin-bottom: 2.0rem !important;
+    }
+    .input-group-text {
+        font-size: 1.5rem;
+    }
+    @media (max-width: 767px) {
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block maincontent %}
+<div class="container-fluid dashboard-area">
+    <div class="container dashboard">
+        <div class="content-card">
+            <h2 class="mb-4">Airtime & Data</h2>
+            
+            <div class="row mb-5">
+                <div class="col-12 btn-container">
+                    <button id="airtimeBtn" class="btn btn-primary btn-lg">
+                        <i class="fas fa-phone me-2"></i>Airtime
+                    </button>
+                    <button id="dataBtn" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-wifi me-2"></i>Data
+                    </button>
+                </div>
+            </div>
+
+            <div id="airtimeSection">
+                <form>
+                    <div class="mb-4">
+                        <label for="airtimeNumber" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control form-control-lg" id="airtimeNumber" placeholder="Enter phone number">
+                    </div>
+                    <div class="mb-4">
+                        <label for="airtimeNetwork" class="form-label">Select Network</label>
+                        <select class="form-select form-select-lg" id="airtimeNetwork">
+                            <option selected>Choose network</option>
+                            <option value="mtn">MTN</option>
+                            <option value="airtel">Airtel</option>
+                            <option value="glo">Glo</option>
+                            <option value="9mobile">9mobile</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="airtimeAmount" class="form-label">Amount</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">₦</span>
+                            <input type="number" class="form-control" id="airtimeAmount" placeholder="Enter amount">
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">Pay</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="dataSection" style="display: none;">
+                <form>
+                    <div class="mb-4">
+                        <label for="dataNumber" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control form-control-lg" id="dataNumber" placeholder="Enter phone number">
+                    </div>
+                    <div class="mb-4">
+                        <label for="dataNetwork" class="form-label">Select Network</label>
+                        <select class="form-select form-select-lg" id="dataNetwork">
+                            <option selected>Choose network</option>
+                            <option value="mtn">MTN</option>
+                            <option value="airtel">Airtel</option>
+                            <option value="glo">Glo</option>
+                            <option value="9mobile">9mobile</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="dataPlan" class="form-label">Select Data Plan</label>
+                        <select class="form-select form-select-lg" id="dataPlan">
+                            <option selected>Choose data plan</option>
+                            <option value="1gb">1GB</option>
+                            <option value="2gb">2GB</option>
+                            <option value="5gb">5GB</option>
+                            <option value="10gb">10GB</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="dataAmount" class="form-label">Amount</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">₦</span>
+                            <input type="number" class="form-control" id="dataAmount" placeholder="Enter amount">
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">Pay</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const airtimeBtn = document.getElementById('airtimeBtn');
+        const dataBtn = document.getElementById('dataBtn');
+        const airtimeSection = document.getElementById('airtimeSection');
+        const dataSection = document.getElementById('dataSection');
+
+        airtimeBtn.addEventListener('click', function() {
+            airtimeSection.style.display = 'block';
+            dataSection.style.display = 'none';
+            airtimeBtn.classList.replace('btn-secondary', 'btn-primary');
+            dataBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+
+        dataBtn.addEventListener('click', function() {
+            airtimeSection.style.display = 'none';
+            dataSection.style.display = 'block';
+            dataBtn.classList.replace('btn-secondary', 'btn-primary');
+            airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+    });
+</script>
+{% endblock %}

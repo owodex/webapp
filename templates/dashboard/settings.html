@@ -1,0 +1,114 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="container-xxl py-5">
+    <div class="container">
+        <h2 class="mb-5">Settings</h2>
+        <div class="row">
+            <!-- Left Column: Menu Items -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body settings-menu">
+                        <h5 class="card-title mb-5">Menu</h5>
+                        <div class="list-group">
+                            <a href="#profile" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center active" data-bs-toggle="list">
+                                <div>
+                                    <i class="fas fa-user me-2"></i>
+                                    Profile
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="#change-password" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-bs-toggle="list">
+                                <div>
+                                    <i class="fas fa-key me-2"></i>
+                                    Change Password
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{% url 'logout' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    Logout
+                                </div>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Main Content -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="profile">
+                                <h5 class="card-title mb-4">Profile</h5>
+                                <form>
+                                    <div class="profile-image-container">
+                                        <img src="https://wallpapers.com/images/high/anonymous-profile-silhouette-b714qekh29tu1anb.png" alt="Profile Picture" id="profileImage" class="profile-image">
+                                        <label for="profileImageUpload" class="profile-image-upload">
+                                        </label>
+                                        <input type="file" id="profileImageUpload" hidden accept="image/*">
+                                    </div>
+                                    <div class="mb-5">
+                                        <label for="fullName" class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" id="fullName" placeholder="Enter your full name">
+                                    </div>
+                                    <div class="mb-5">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" placeholder="Enter your email">
+                                    </div>
+                                    <div class="mb-5">
+                                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phoneNumber" placeholder="Enter your phone number">
+                                    </div>
+                                    <div class="mb-5">
+                                        <label for="referralCode" class="form-label">Referral Code</label>
+                                        <input type="text" class="form-control" id="referralCode" placeholder="Your referral code" readonly>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="change-password">
+                                <h5 class="card-title">Change Password</h5>
+                                <p>Change your account password here.</p>
+                                <!-- Add change password form here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>w
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Enable Bootstrap list functionality
+        var triggerTabList = [].slice.call(document.querySelectorAll('.list-group-item'))
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl)
+
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+            })
+        })
+
+        // Profile image upload preview
+        $("#profileImageUpload").change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#profileImage').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    });
+</script>
+{% endblock %}

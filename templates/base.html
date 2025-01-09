@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Owodex | Buy & Sell Crypto and Gift Cards</title>
+    <title>Owodex | Sell Gift Cards at Best Rates</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta content="" name="keywords">
     <meta content="" name="description">
@@ -52,7 +52,6 @@
         <div class="position-relative p-0">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 px-lg-5 py-3 py-lg-0">
                 <a href="/" class="navbar-brand p-0">
-                    {% comment %} <h1 class="text-primary m-0"><i class="fa fa-utensils me-3"></i>Owodex</h1> {% endcomment %}
                     <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo"> 
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -110,8 +109,8 @@
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <div class="footer-menu">
-                        <a href="">Terms & Condition</a>
-                        <a href="">Privacy Policy</a>
+                        <a href="{% url 'terms' %}">Terms & Condition</a>
+                        <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,235 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Owodex</title>
+
+    <!-- Favicon -->
+    <link href="{% static 'img/OWODEX icon.png' %}" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&family=Nunito:wght@600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="{% static 'lib/animate/animate.min.css' %}" rel="stylesheet">
+    <link href="{% static 'lib/owlcarousel/assets/owl.carousel.min.css' %}" rel="stylesheet">
+    <link href="{% static 'lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css' %}" rel="stylesheet" />
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+
+    <!-- Template Stylesheet -->
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+
+    {% block extra_css %}
+    {% endblock %}
+    
+</head>
+<body>
+    <div class="content-wrapper">
+        <!-- Spinner Start -->
+        <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <!-- Spinner End -->
+
+        <!-- Navigation bar -->
+        
+        <nav class="navbar navbar-expand-lg navbar-dark px-4 px-lg-5 py-3" style="background-color: #0F172B;">
+            <a href="/" class="navbar-brand p-0">
+                <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo"> 
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="fa fa-bars"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <div class="navbar-nav ms-auto py-0 pe-4">
+                    <a href="{% url 'dashboard' %}" class="nav-item nav-link active">Dashboard</a>
+                    <a href="{% url 'services' %}" class="nav-item nav-link">Services</a>
+                    <a href="{% url 'transactions' %}" class="nav-item nav-link">Transactions</a>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="input-group me-3 d-none d-lg-flex">
+                        <input type="text" class="form-control" placeholder="Search...">
+                        <button class="btn btn-primary" type="button"><i class="fa fa-search"></i></button>
+                    </div>
+                    <a href="#" class="btn btn-sm btn-primary me-2 d-lg-none" id="mobileSearchBtn"><i class="fa fa-search"></i></a>
+                    <a href="#" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#notificationsModal"><i class="fa fa-bell"></i></a>
+                    <a href="{% url 'settings' %}" class="btn btn-sm btn-primary me-2"><i class="fa fa-cog"></i></a>
+                    <a href="#" class="btn btn-sm btn-primary profile-icon" data-bs-toggle="modal" data-bs-target="#profileModal">
+                        <i class="fa fa-user"></i>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Search Modal -->
+        <div class="modal fade" id="mobileSearchModal" tabindex="-1" aria-labelledby="mobileSearchModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mobileSearchModalLabel">Search</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search...">
+                                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% block maincontent %}
+        {% endblock %}
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Owodex. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Profile Modal -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+            <div class="d-flex align-items-center mb-3">
+                <div class="profile-initial me-3">
+                {{ request.user.first_name|first|default:"U"|upper }}
+                </div>
+                <div>
+                <h5 class="mb-0">{{ request.user.get_full_name|default:request.user.username }}<p>Pascal Osas</p></h5>
+                <small class="text-muted">{{ request.user.email }}</small>
+                </div>
+            </div>
+            <hr class="my-3">
+            <a href="#" class="d-block text-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                <i class="fas fa-trash-alt me-2"></i> Delete Account
+            </a>
+            </div>
+        </div>
+        </div>
+    </div>
+  
+  <!-- Delete Account Modal -->
+  <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteAccountModalLabel">Delete Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+<div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="notificationsModalLabel">Recent Notifications</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="notification-item d-flex align-items-center p-3 border-bottom">
+            <i class="fas fa-coins text-warning me-3 fa-2x"></i>
+            <div>
+              <h6 class="mb-0">New transaction received</h6>
+              <small class="text-muted">You received 100 OWDX from @johndoe</small>
+            </div>
+          </div>
+          <div class="notification-item d-flex align-items-center p-3 border-bottom">
+            <i class="fas fa-user-plus text-success me-3 fa-2x"></i>
+            <div>
+              <h6 class="mb-0">New follower</h6>
+              <small class="text-muted">@sarahsmith started following you</small>
+            </div>
+          </div>
+          <div class="notification-item d-flex align-items-center p-3 border-bottom">
+            <i class="fas fa-gift text-primary me-3 fa-2x"></i>
+            <div>
+              <h6 class="mb-0">Special offer!</h6>
+              <small class="text-muted">Get 50% off on your next transaction</small>
+            </div>
+          </div>
+          <div class="notification-item d-flex align-items-center p-3">
+            <i class="fas fa-shield-alt text-info me-3 fa-2x"></i>
+            <div>
+              <h6 class="mb-0">Security update</h6>
+              <small class="text-muted">We've enhanced our security measures</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'lib/wow/wow.min.js' %}"></script>
+    <script src="{% static 'lib/easing/easing.min.js' %}"></script>
+    <script src="{% static 'lib/waypoints/waypoints.min.js' %}"></script>
+    <script src="{% static 'lib/counterup/counterup.min.js' %}"></script>
+    <script src="{% static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
+    <script src="{% static 'lib/tempusdominus/js/moment.min.js' %}"></script>
+    <script src="{% static 'lib/tempusdominus/js/moment-timezone.min.js' %}"></script>
+    <script src="{% static 'lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js' %}"></script>
+
+    <!-- Template Javascript -->
+    <script src="{% static 'js/main.js' %}"></script>
+
+    {% block extra_js %}
+    {% endblock %}
+
+    <script>
+        // Hide spinner when page is loaded
+        window.addEventListener('load', function() {
+            document.querySelector('#spinner').classList.remove('show');
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+            const mobileSearchModal = new bootstrap.Modal(document.getElementById('mobileSearchModal'));
+    
+            mobileSearchBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                mobileSearchModal.show();
+            });
+        });
+    </script>
+</body>
+</html>

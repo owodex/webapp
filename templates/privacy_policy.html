@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="py-5 bg-dark hero-header mb-5">
+    <div class="container text-center my-5 pt-5 pb-4">
+        <h1 class="display-3 text-white mb-3 animated slideInDown">Privacy Policy</h1>
+    </div>
+</div>
+
+<div class="container-xxl privacy py-5">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-12">
+                <h2 class="mb-4">Privacy Policy for Owodex</h2>
+                <p>Last updated: {% now "F d, Y" %}</p>
+
+                <p>At Owodex Digital Technologies Limited ("Owodex," "we," "us," or "our"), we value your privacy and are committed to safeguarding your personal information. This Privacy Policy explains how we collect, use, and share data when you use the Owodex App. By accessing or using our app, you agree to the terms outlined in this Privacy Policy.</p>
+
+                <h4 class="mt-4">1. Information We Collect</h4>
+                <p>We may gather the following types of information when you interact with our app:</p>
+                <ul>
+                    <li>Personal Details: Information such as your name, email address, and phone number may be collected during account registration, support inquiries, or other interactions.</li>
+                    <li>Device Details: We may collect data about your device, including model, operating system, unique identifiers, and technical specifications.</li>
+                    <li>Usage Data: Information about how you interact with our app, including the features you access, actions you take, and time spent on different sections.</li>
+                    <li>Image Data: Images uploaded by users, including associated metadata and related information, may be processed as part of app functionalities.</li>
+                </ul>
+
+                <h4 class="mt-4">2. How We Use Your Information</h4>
+                <p>We utilize the information collected for the following purposes:</p>
+                <ul>
+                    <li>To deliver, operate, and improve app performance and functionality.</li>
+                    <li>To tailor user experiences based on preferences.</li>
+                    <li>To communicate updates, notifications, and promotions.</li>
+                    <li>To analyze usage trends and improve app design.</li>
+                    <li>To comply with legal and regulatory requirements.</li>
+                    <li>To enable app features requiring image uploads and processing.</li>
+                    <li>To offer personalized recommendations and relevant content.</li>
+                </ul>
+
+                <h4 class="mt-4">3. How We Share Information</h4>
+                <p>Your information may be shared with the following third parties:</p>
+                <ol>
+                    <li>Service Providers: Third-party partners assisting in hosting, analytics, technical support, and operational tasks.</li>
+                    <li>Business Partners: Collaborators, including advertisers and affiliates, for promotional purposes.</li>
+                    <li>Legal Authorities: Disclosure may occur if required by law, regulation, or legal proceedings, or to safeguard our rights and user safety.</li>
+                    <li>Image Data: Uploaded image information and metadata may be shared to facilitate app functionalities.</li>
+                </ol>
+
+                <h4 class="mt-4">4. Your Privacy Choices</h4>
+                <p>You have control over your information and can:</p>
+                <ul>
+                    <li>Adjust privacy and data-sharing settings in the app.</li>
+                    <li>Modify device permissions (e.g., camera, storage access).</li>
+                    <li>Opt out of certain data collection practices where applicable.</li>
+                </ul>
+                <p>Please note that restricting data collection may limit access to some app features.</p>
+
+                <h4 class="mt-4">5. Data Security</h4>
+                <p>We implement strong security measures to protect your information against unauthorized access, misuse, or loss. However, no security system is entirely foolproof.</p>
+
+                <h4 class="mt-4">6. Children's Privacy</h4>
+                <p>The Owodex App is not designed for children under 13, and we do not knowingly collect data from children under this age. If such data is identified, it will be promptly deleted.</p>
+
+                <h4 class="mt-4">7. Policy Updates</h4>
+                <p>We may revise this Privacy Policy periodically. Updates will be communicated via our app or official website. Continued use of the app following changes indicates your acceptance of the updated policy.</p>
+
+                <h4 class="mt-4">8. Contact Us</h4>
+                <p>For any questions or concerns regarding this Privacy Policy, please reach out to us at:</p>
+                <p>Email: support@owodex.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="container-fluid dashboard-area">
+    <div class="container dashboard">
+        <h2 class="mb-4">Giftcards</h2>
+        
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search giftcards" id="searchGiftcards">
+                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="giftcardContainer">
+            <!-- Giftcard images will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const giftcards = [
+            'amazon.png', 'Apple.png', 'google play.png', 'steam.png',
+            'xbox.png', 'itunes.png', 'roblox.png', 'macy.png', 'nordstrom.png',
+            'itunes.png', 'ebay.png', 'target.png',
+            'cvs.png', 'amex.png', 'nike.png', 'coach.png', 'dick.png',
+            'footlocker.png', 'vanilla.png', 'sephora.png', 'netspend.png',
+            'mastercard.png', 'kohl.png', 'finishline.png', 'gamestop.png', 'razergold.png'
+        ];
+
+        const container = document.getElementById('giftcardContainer');
+
+        giftcards.forEach(card => {
+            const col = document.createElement('div');
+            col.className = 'col-lg-3 col-md-4 col-sm-6 mb-4';
+
+            const link = document.createElement('a');
+            link.href = `{% url 'trade_giftcard' %}?name=${encodeURIComponent(card.split('.')[0])}&image=${encodeURIComponent(card)}`;
+            link.className = 'text-decoration-none';
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'card h-100';
+
+            const img = document.createElement('img');
+            img.src = `{% static 'img/giftcards/' %}${card}`;
+            img.className = 'card-img-top';
+            img.alt = card.split('.')[0] + ' giftcard';
+
+            cardDiv.appendChild(img);
+            link.appendChild(cardDiv);
+            col.appendChild(link);
+            container.appendChild(col);
+        });
+
+        const searchInput = document.getElementById('searchGiftcards');
+        const searchBtn = document.getElementById('searchButton');
+
+        function filterGiftcards() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const cards = container.getElementsByClassName('col-lg-3');
+
+            Array.from(cards).forEach(card => {
+                const alt = card.querySelector('img').alt.toLowerCase();
+                if (alt.includes(searchTerm)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        searchBtn.addEventListener('click', filterGiftcards);
+        searchInput.addEventListener('keyup', filterGiftcards);
+    });
+</script>
+{% endblock %}
