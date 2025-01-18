@@ -12,15 +12,15 @@
                 <div class="card wallet-balance-card mb-5">
                     <h5 class="card-title">Wallet Balance</h5>
                     <div class="wallet-balance-amount">
-                        <span id="balanceAmount">₦50,000.00</span>
-                        <i class="fas fa-eye" id="toggleBalance"></i>
+                        <span id="balanceAmount">₦*****</span>
+                        <i class="fas fa-eye-slash" id="toggleBalance"></i>
                     </div>
                     <div class="signup-bonus">
-                        <i class="fas fa-gift"></i> ₦2,000 signup bonus. <a href="{% url 'bonus' %}" class="activate-bonus">Activate</a>
+                        <i class="fas fa-gift"></i> ₦2,000 signup bonus. <b><u><a href="{% url 'bonus' %}" class="activate-bonus">Activate</a></u></b>
                     </div>
                     <div class="button-group">
-                        <button class="btn btn-primary me-2"><i class="fas fa-exchange-alt"></i> Transfer</button>
-                        <button class="btn btn-secondary"><i class="fas fa-wallet"></i> Withdraw</button>
+                        <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#transferModal"><i class="fas fa-exchange-alt"></i> Transfer</button>
+                        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#bankTransferModal"><i class="fas fa-wallet"></i> Withdraw</button>
                     </div>
                 </div>
                 <!-- Recent transactions -->
@@ -31,26 +31,28 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Description</th>
+                                    <th>Service</th>
                                     <th>Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for transaction in recent_transactions %}
                                 <tr>
-                                    <td>2023-05-01</td>
-                                    <td>Giftcard Purchase</td>
-                                    <td>-$50.00</td>
+                                    <td>{{ transaction.date|date:"Y-m-d" }}</td>
+                                    <td>{{ transaction.service }}</td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'credit' %}
+                                            +₦{{ transaction.amount|floatformat:2 }}
+                                        {% else %}
+                                            -₦{{ transaction.amount|floatformat:2 }}
+                                        {% endif %}
+                                    </td>
                                 </tr>
+                                {% empty %}
                                 <tr>
-                                    <td>2023-04-30</td>
-                                    <td>Bill Payment</td>
-                                    <td>-$100.00</td>
+                                    <td colspan="3" class="text-center">No recent transactions.</td>
                                 </tr>
-                                <tr>
-                                    <td>2023-04-29</td>
-                                    <td>Deposit</td>
-                                    <td>+$200.00</td>
-                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -70,22 +72,250 @@
         </div>
     </div>
 </div>
+
+<!-- Transfer Options Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="transferModalLabel">Transfer Options</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-grid gap-3">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#owodexTagModal">
+              <i class="fas fa-user me-2"></i> Owodex Tag
+              <small class="d-block">Transfer to another Owodex user</small>
+              <i class="fas fa-chevron-right float-end"></i>
+            </button>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bankTransferModal">
+              <i class="fas fa-university me-2"></i> Send to a Bank Account
+              <small class="d-block">Transfer to any bank account</small>
+              <i class="fas fa-chevron-right float-end"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Owodex Tag Transfer Modal -->
+  <div class="modal fade" id="owodexTagModal" tabindex="-1" aria-labelledby="owodexTagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="owodexTagModalLabel">Transfer to Owodex Tag</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="owodexTagForm">
+            <div class="mb-3">
+              <label for="owodexAmount" class="form-label">Amount</label>
+              <input type="number" class="form-control" id="owodexAmount" required>
+            </div>
+            <div class="mb-3">
+              <label for="owodexTag" class="form-label">Owodex Tag (Username)</label>
+              <input type="text" class="form-control" id="owodexTag" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Transfer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bank Transfer Modal -->
+  <div class="modal fade" id="bankTransferModal" tabindex="-1" aria-labelledby="bankTransferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bankTransferModalLabel">Send to Bank Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="btn-group w-100 mb-3" role="group">
+            <input type="radio" class="btn-check" name="beneficiaryType" id="newBeneficiary" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="newBeneficiary">New Beneficiary</label>
+  
+            <input type="radio" class="btn-check" name="beneficiaryType" id="savedBeneficiary" autocomplete="off">
+            <label class="btn btn-outline-primary" for="savedBeneficiary">Saved Beneficiary</label>
+          </div>
+  
+          <form id="newBeneficiaryForm">
+            <div class="mb-3">
+              <label for="bankAmount" class="form-label">Amount</label>
+              <input type="number" class="form-control" id="bankAmount" required>
+            </div>
+            <div class="mb-3">
+              <label for="accountNumber" class="form-label">Account Number</label>
+              <input type="text" class="form-control" id="accountNumber" required>
+            </div>
+            <div class="mb-3">
+              <label for="bankName" class="form-label">Bank Name</label>
+              <input type="text" class="form-control" id="bankName" required>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="saveBeneficiary">
+              <label class="form-check-label" for="saveBeneficiary">Save to Beneficiary</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Transfer</button>
+          </form>
+  
+          <form id="savedBeneficiaryForm" style="display: none;">
+            <div class="mb-3">
+              <label for="savedBeneficiarySelect" class="form-label">Select Beneficiary</label>
+              <select class="form-select" id="savedBeneficiarySelect" required>
+                <!-- Options will be populated dynamically -->
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="savedBankAmount" class="form-label">Amount</label>
+              <input type="number" class="form-control" id="savedBankAmount" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Transfer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   
 {% endblock %}
 
-{% block extra_js%}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ... existing balance toggle code ...
+
+        // Transfer modals functionality
+        const transferModal = new bootstrap.Modal(document.getElementById('transferModal'));
+        const owodexTagModal = new bootstrap.Modal(document.getElementById('owodexTagModal'));
+        const bankTransferModal = new bootstrap.Modal(document.getElementById('bankTransferModal'));
+
+        document.getElementById('transferModal').addEventListener('hide.bs.modal', function () {
+            owodexTagModal.hide();
+            bankTransferModal.hide();
+        });
+
+        // Bank transfer form toggle
+        const newBeneficiaryRadio = document.getElementById('newBeneficiary');
+        const savedBeneficiaryRadio = document.getElementById('savedBeneficiary');
+        const newBeneficiaryForm = document.getElementById('newBeneficiaryForm');
+        const savedBeneficiaryForm = document.getElementById('savedBeneficiaryForm');
+
+        newBeneficiaryRadio.addEventListener('change', function() {
+            newBeneficiaryForm.style.display = 'block';
+            savedBeneficiaryForm.style.display = 'none';
+        });
+
+        savedBeneficiaryRadio.addEventListener('change', function() {
+            newBeneficiaryForm.style.display = 'none';
+            savedBeneficiaryForm.style.display = 'block';
+            loadBeneficiaries();
+        });
+
+        // Handle form submissions
+        document.getElementById('owodexTagForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const amount = document.getElementById('owodexAmount').value;
+            const tag = document.getElementById('owodexTag').value;
+
+            axios.post('/api/owodex-tag-transfer/', {
+                amount: amount,
+                tag: tag
+            })
+            .then(function (response) {
+                alert(response.data.message);
+                owodexTagModal.hide();
+                updateBalance();
+            })
+            .catch(function (error) {
+                alert(error.response.data.message);
+            });
+        });
+
+        document.getElementById('newBeneficiaryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const amount = document.getElementById('bankAmount').value;
+            const accountNumber = document.getElementById('accountNumber').value;
+            const bankName = document.getElementById('bankName').value;
+            const saveBeneficiary = document.getElementById('saveBeneficiary').checked;
+
+            axios.post('/api/bank-transfer/', {
+                amount: amount,
+                account_number: accountNumber,
+                bank_name: bankName,
+                save_beneficiary: saveBeneficiary
+            })
+            .then(function (response) {
+                alert(response.data.message);
+                bankTransferModal.hide();
+                updateBalance();
+            })
+            .catch(function (error) {
+                alert(error.response.data.message);
+            });
+        });
+
+        document.getElementById('savedBeneficiaryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const beneficiary = JSON.parse(document.getElementById('savedBeneficiarySelect').value);
+            const amount = document.getElementById('savedBankAmount').value;
+
+            axios.post('/api/bank-transfer/', {
+                amount: amount,
+                account_number: beneficiary.account_number,
+                bank_name: beneficiary.bank_name,
+                save_beneficiary: false
+            })
+            .then(function (response) {
+                alert(response.data.message);
+                bankTransferModal.hide();
+                updateBalance();
+            })
+            .catch(function (error) {
+                alert(error.response.data.message);
+            });
+        });
+
+        function loadBeneficiaries() {
+            axios.get('/api/get-beneficiaries/')
+            .then(function (response) {
+                const select = document.getElementById('savedBeneficiarySelect');
+                select.innerHTML = '';
+                response.data.forEach(function(beneficiary) {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify(beneficiary);
+                    option.textContent = `${beneficiary.name} - ${beneficiary.bank_name} (${beneficiary.account_number})`;
+                    select.appendChild(option);
+                });
+            })
+            .catch(function (error) {
+                console.error('Error loading beneficiaries:', error);
+            });
+        }
+
+        function updateBalance() {
+            // You would typically fetch the new balance from the server here
+            // For this example, we'll just reload the page
+            location.reload();
+        }
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const balanceAmount = document.getElementById('balanceAmount');
         const toggleBalance = document.getElementById('toggleBalance');
-        let isHidden = false;
+        let isHidden = true;
+        const actualBalance = '₦50,000.00'; // You might want to pass this from the backend
 
         toggleBalance.addEventListener('click', function() {
             if (isHidden) {
-                balanceAmount.textContent = '₦50,000.00';
+                balanceAmount.textContent = actualBalance;
                 toggleBalance.classList.replace('fa-eye-slash', 'fa-eye');
             } else {
-                balanceAmount.textContent = '₦••••••••';
+                balanceAmount.textContent = '₦*****';
                 toggleBalance.classList.replace('fa-eye', 'fa-eye-slash');
             }
             isHidden = !isHidden;

@@ -9,8 +9,12 @@
                     <h1 class="display-3 text-white animated slideInLeft">Sell Gift Cards<br> at Best Rates.</h1>
                     <p class="text-white animated slideInLeft mb-4 pb-2">Redeem your Gift cards for Naira and get the best rates.</p>
                     <div class="d-lg-flex flex-column flex-sm-row justify-content-center justify-content-lg-start ">
-                        <a href="{% url 'signup' %}" class="btn btn-primary py-sm-3 px-sm-5 me-sm-4 mb-3 animated slideInLeft">Get Started</a>
-                        <a href="{% url 'support' %}" class="btn btn-outline-light py-sm-3 px-sm-5 animated slideInLeft">Contact Support</a>
+                        {% if authenticated%}
+                            <a href="{% url 'signup' %}" class="btn btn-primary py-sm-3 px-sm-5 me-sm-4 mb-3 animated slideInLeft">Get Started</a>
+                        {% else %}
+                            <a href="{% url 'dashboard' %}" class="btn btn-primary py-sm-3 px-sm-5 me-sm-4 mb-3 animated slideInLeft">Dashboard</a>
+                        {% endif %}
+                          <a href="{% url 'support' %}" class="btn btn-outline-light py-sm-3 px-sm-5 animated slideInLeft">Contact Support</a>
                     </div>
                     <div class="mt-4">
                         <small class="text-white fs-6"><i class="fa fa-gift text-white pe-3 fs-6"></i>Get ₦2,000 signup bonus</small>

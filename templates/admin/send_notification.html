@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Send Notification</h1>
+<form method="post">
+    {% csrf_token %}
+    <div>
+        <label for="title">Title:</label>
+        <input type="text" name="title" id="title" required>
+    </div>
+    <div>
+        <label for="message">Message:</label>
+        <textarea name="message" id="message" required></textarea>
+    </div>
+    <div>
+        <label for="is_for_all_users">Send to all users:</label>
+        <input type="checkbox" name="is_for_all_users" id="is_for_all_users">
+    </div>
+    <div id="user_selection">
+        <label>Select users:</label>
+        {% for user in users %}
+        <div>
+            <input type="checkbox" name="users" value="{{ user.id }}" id="user_{{ user.id }}">
+            <label for="user_{{ user.id }}">{{ user.email }}</label>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="submit">Send Notification</button>
+</form>
+
+<script>
+    document.getElementById('is_for_all_users').addEventListener('change', function() {
+        document.getElementById('user_selection').style.display = this.checked ? 'none' : 'block';
+    });
+</script>
+{% endblock %}

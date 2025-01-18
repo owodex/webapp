@@ -7,12 +7,28 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Trade Gift Card</h2>
                     <div class="text-center mb-4">
-                        <img id="giftcardImage" alt="Gift Card" class="img-fluid" style="max-height: 200px;">
+                        <img id="giftcardImage" src="" alt="Gift Card" class="img-fluid" style="max-height: 200px;">
                     </div>
-                    <form id="tradeGiftcardForm">
-                        <!-- Form fields will be dynamically inserted here -->
-                    </form>
+                </div>
+                {% if success_message %}
+                <div class="alert alert-success">
+                    {{ success_message }}
+                </div>
+                {% endif %}
+
+                {% if error_message %}
+                <div class="alert alert-danger">
+                    {{ error_message }}
+                </div>
+                {% endif %}
+
+                <form id="tradeGiftcardForm" method="post" enctype="multipart/form-data" action="{% url 'trade_giftcard' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="giftcard_name" name="giftcard_name" value="">
+                    <!-- The form fields will be dynamically inserted here by JavaScript -->
+                </form>
                 </div>
             </div>
         </div>
@@ -22,152 +38,187 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const giftcardName = urlParams.get('name');
-    const giftcardImage = urlParams.get('image');
-
-    // Set the gift card image
-    const giftcardImageElement = document.getElementById('giftcardImage');
-    giftcardImageElement.src = `{% static 'img/giftcards/' %}${giftcardImage}`;
-    giftcardImageElement.alt = `${giftcardName} Gift Card`;
-
-    // Form fields configuration
-    const formFields = [
-        {
-            type: 'select',
-            id: 'giftCardCurrency',
-            label: 'Gift Card Currency',
-            options: [
-                { value: '', text: 'Select Currency' },
-                { value: 'us', text: '🇺🇸 United States' },
-                { value: 'gb', text: '🇬🇧 United Kingdom' },
-                { value: 'ca', text: '🇨🇦 Canada' }
-            ]
-        },
-        {
-            type: 'select',
-            id: 'giftCardType',
-            label: 'Gift Card Type',
-            options: [
-                { value: '', text: 'Select Type' },
-                { value: 'ecode', text: 'E-code' },
-                { value: 'physical', text: 'Physical' }
-            ]
-        },
-        {
-            type: 'select',
-            id: 'denomination',
-            label: 'Denomination',
-            options: [
-                { value: '', text: 'Select Denomination' },
-                { value: '25', text: '$25' },
-                { value: '50', text: '$50' },
-                { value: '100', text: '$100' }
-            ]
-        },
-        {
-            type: 'number',
-            id: 'amount',
-            label: 'Enter Amount',
-            placeholder: '0.00',
-            prefix: '$'
-        },
-        {
-            type: 'file',
-            id: 'giftCardImages',
-            label: 'Upload Gift Card Images',
-            accept: 'image/*',
-            multiple: true
-        }
-    ];
-
-    const form = document.getElementById('tradeGiftcardForm');
-
-    // Function to create form fields
-    function createFormField(field) {
-        const div = document.createElement('div');
-        div.className = 'mb-4'; // Increased margin between fields
-
-        const label = document.createElement('label');
-        label.htmlFor = field.id;
-        label.className = 'form-label';
-        label.textContent = field.label;
-
-        div.appendChild(label);
-
-        if (field.type === 'select') {
-            const select = document.createElement('select');
-            select.id = field.id;
-            select.className = 'form-select form-select-lg'; // Larger select input
-
-            field.options.forEach(option => {
-                const optionElement = document.createElement('option');
-                optionElement.value = option.value;
-                optionElement.textContent = option.text;
-                select.appendChild(optionElement);
-            });
-
-            div.appendChild(select);
-        } else if (field.type === 'file') {
-            const fileInputContainer = document.createElement('div');
-            fileInputContainer.className = 'file-input-container';
-        
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.id = field.id;
-            input.className = 'form-control form-control-lg'; // Larger input
-            input.accept = field.accept;
-            input.multiple = field.multiple;
-            input.style.display = 'none';
-        
-            const customFileUpload = document.createElement('div');
-            customFileUpload.className = 'custom-file-upload';
-            customFileUpload.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Choose Files';
-        
-            const fileList = document.createElement('div');
-            fileList.id = 'fileList';
-            fileList.className = 'mt-2';
-        
-            input.addEventListener('change', function(e) {
-                fileList.innerHTML = '';
-                for (let i = 0; i < this.files.length; i++) {
-                    const fileName = document.createElement('p');
-                    fileName.textContent = this.files[i].name;
-                    fileList.appendChild(fileName);
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const giftcardName = urlParams.get('name');
+        const giftcardImage = urlParams.get('image');
+    
+        // Set the gift card name in the hidden input
+        document.getElementById('giftcard_name').value = giftcardName;
+    
+        // Set the gift card image
+        const giftcardImageElement = document.getElementById('giftcardImage');
+        giftcardImageElement.src = `/static/img/giftcards/${giftcardImage}`;
+        giftcardImageElement.alt = `${giftcardName} Gift Card`;
+    
+        // Form fields configuration
+        const formFields = [
+            {
+                type: 'text',
+                id: 'giftcard_name_display',
+                label: 'Gift Card Name',
+                value: giftcardName,
+                readonly: true
+            },
+            {
+                type: 'select',
+                id: 'giftCardCurrency',
+                label: 'Gift Card Currency',
+                options: [
+                    { value: '', text: 'Select Currency' },
+                    { value: 'us', text: '🇺🇸 United States' },
+                    { value: 'gb', text: '🇬🇧 United Kingdom' },
+                    { value: 'ca', text: '🇨🇦 Canada' }
+                ]
+            },
+            {
+                type: 'select',
+                id: 'giftCardType',
+                label: 'Gift Card Type',
+                options: [
+                    { value: '', text: 'Select Type' },
+                    { value: 'ecode', text: 'E-code' },
+                    { value: 'physical', text: 'Physical' }
+                ]
+            },
+            {
+                type: 'select',
+                id: 'denomination',
+                label: 'Denomination',
+                options: [
+                    { value: '', text: 'Select Denomination' },
+                    { value: '25', text: '$25' },
+                    { value: '50', text: '$50' },
+                    { value: '100', text: '$100' }
+                ]
+            },
+            {
+                type: 'number',
+                id: 'amount',
+                label: 'Enter Amount',
+                placeholder: '0.00',
+                prefix: '$'
+            },
+            {
+                type: 'file',
+                id: 'giftCardImages',
+                label: 'Upload Gift Card Images',
+                accept: 'image/*',
+                multiple: true
+            }
+        ];
+    
+        const form = document.getElementById('tradeGiftcardForm');
+    
+        // Function to create form fields
+        function createFormField(field) {
+            const div = document.createElement('div');
+            div.className = 'mb-4';
+    
+            const label = document.createElement('label');
+            label.htmlFor = field.id;
+            label.className = 'form-label';
+            label.textContent = field.label;
+    
+            div.appendChild(label);
+    
+            if (field.type === 'select') {
+                const select = document.createElement('select');
+                select.id = field.id;
+                select.name = field.id;
+                select.className = 'form-select form-select-lg';
+    
+                field.options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    select.appendChild(optionElement);
+                });
+    
+                div.appendChild(select);
+            } else if (field.type === 'file') {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = field.id;
+                fileInput.name = field.id;
+                fileInput.className = 'form-control form-control-lg';
+                fileInput.accept = field.accept;
+                fileInput.multiple = field.multiple;
+                div.appendChild(fileInput);
+            } else if (field.type === 'text' || field.type === 'number') {
+                const input = document.createElement('input');
+                input.type = field.type;
+                input.id = field.id;
+                input.name = field.id;
+                input.className = 'form-control form-control-lg';
+                input.placeholder = field.placeholder || '';
+                
+                if (field.readonly) {
+                    input.readOnly = true;
                 }
-            });
-        
-            customFileUpload.addEventListener('click', () => input.click());
-        
-            fileInputContainer.appendChild(customFileUpload);
-            fileInputContainer.appendChild(fileList);
-        
-            div.appendChild(input);
-            div.appendChild(fileInputContainer);
+                
+                if (!field.readonly) {
+                    input.required = true;
+                }
+
+                if (field.value) {
+                    input.value = field.value;
+                }
+    
+                if (field.prefix) {
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'input-group';
+    
+                    const prefixSpan = document.createElement('span');
+                    prefixSpan.className = 'input-group-text';
+                    prefixSpan.textContent = field.prefix;
+    
+                    inputGroup.appendChild(prefixSpan);
+                    inputGroup.appendChild(input);
+                    div.appendChild(inputGroup);
+                } else {
+                    div.appendChild(input);
+                }
+            }
+    
+            return div;
         }
-
-        return div;
-    }
-
-    // Create and append form fields
-    formFields.forEach(field => {
-        form.appendChild(createFormField(field));
-    });
-
-    // Add submit button
-    const submitButton = document.createElement('button');
-    submitButton.type = 'submit';
-    submitButton.className = 'btn btn-primary btn-lg w-100'; // Larger button
-    submitButton.textContent = 'Trade Gift Card';
-    form.appendChild(submitButton);
-
-    // Handle form submission
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Add your form submission logic here
-        console.log('Form submitted');
-    });
+    
+        // Create and append form fields
+        formFields.forEach(field => {
+            form.appendChild(createFormField(field));
+        });
+    
+        // Add submit button
+        const submitButton = document.createElement('button');
+        submitButton.type = 'submit';
+        submitButton.className = 'btn btn-primary btn-lg w-100';
+        submitButton.textContent = 'Trade Gift Card';
+        form.appendChild(submitButton);
+    
+        // Handle form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+    
+            // Basic form validation
+            const amount = document.getElementById('amount').value;
+            const denomination = document.getElementById('denomination').value;
+            const currency = document.getElementById('giftCardCurrency').value;
+            const cardType = document.getElementById('giftCardType').value;
+    
+            if (!amount || !denomination || !currency || !cardType) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+    
+            if (parseFloat(amount) <= 0) {
+                alert('Amount must be greater than 0.');
+                return;
+            }
+    
+            // If all validations pass, submit the form
+            this.submit();
+        });
 
     // Add custom styles
     const style = document.createElement('style');
@@ -223,6 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     `;
     document.head.appendChild(style);
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // You can add client-side validation here if needed
+        this.submit(); // Submit the form
+    });
 });
 </script>
 {% endblock %}

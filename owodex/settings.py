@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app',
     'phonenumber_field',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'app.context_processors.user_notifications',
             ],
         },
     },
@@ -124,7 +126,15 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 STATIC_ROOT = BASE_DIR /'staticfiles'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Add these lines
+AUTH_USER_MODEL = 'app.CustomUser'
+LOGIN_REDIRECT_URL = 'dashboard'  # Replace 'dashboard' with your dashboard URL name
+LOGIN_URL = 'login'  # This should match the name you've given to your login URL pattern

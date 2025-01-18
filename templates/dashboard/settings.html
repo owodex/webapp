@@ -1,5 +1,6 @@
 {% extends 'dashboard/main.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block maincontent %}
 <div class="container-xxl py-5">
@@ -26,7 +27,7 @@
                                 </div>
                                 <i class="fas fa-chevron-right"></i>
                             </a>
-                            <a href="{% url 'logout' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <a href="{% url 'logout' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center text-danger" id="logout-link">
                                 <div>
                                     <i class="fas fa-sign-out-alt me-2"></i>
                                     Logout
@@ -37,7 +38,8 @@
                     </div>
                 </div>
             </div>
-
+            
+            
             <!-- Right Column: Main Content -->
             <div class="col-md-8">
                 <div class="card">
@@ -45,36 +47,68 @@
                         <div class="tab-content">
                             <div class="tab-pane fade show active" id="profile">
                                 <h5 class="card-title mb-4">Profile</h5>
-                                <form>
+                                <form method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
                                     <div class="profile-image-container">
-                                        <img src="https://wallpapers.com/images/high/anonymous-profile-silhouette-b714qekh29tu1anb.png" alt="Profile Picture" id="profileImage" class="profile-image">
+                                        <img src="{{ user.profile_picture.url|default:'https://wallpapers.com/images/high/anonymous-profile-silhouette-b714qekh29tu1anb.png' }}" alt="Profile Picture" id="profileImage" class="profile-image">
                                         <label for="profileImageUpload" class="profile-image-upload">
                                         </label>
-                                        <input type="file" id="profileImageUpload" hidden accept="image/*">
+                                        <input type="file" id="profileImageUpload" name="profile_picture" hidden accept="image/*">
                                     </div>
                                     <div class="mb-5">
                                         <label for="fullName" class="form-label">Full Name</label>
-                                        <input type="text" class="form-control" id="fullName" placeholder="Enter your full name">
+                                        <input type="text" class="form-control" id="fullName" name="full_name" placeholder="Enter your full name" value="{{ user.get_full_name }}">
                                     </div>
                                     <div class="mb-5">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" placeholder="Enter your email">
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" value="{{ user.email }}">
                                     </div>
                                     <div class="mb-5">
                                         <label for="phoneNumber" class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="phoneNumber" placeholder="Enter your phone number">
+                                        <input type="tel" class="form-control" id="phoneNumber" name="phone_number" placeholder="Enter your phone number" value="{{ user.phone_number }}">
                                     </div>
                                     <div class="mb-5">
                                         <label for="referralCode" class="form-label">Referral Code</label>
-                                        <input type="text" class="form-control" id="referralCode" placeholder="Your referral code" readonly>
+                                        <input type="text" class="form-control" id="referralCode" name="referral_code" placeholder="Your referral code" readonly value="{{ user.referral_code }}">
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
                                 </form>
                             </div>
+                            {% if password_form.errors %}
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        document.querySelector('a[href="#change-password"]').click();
+                                    });
+                                </script>
+                            {% endif %}
                             <div class="tab-pane fade" id="change-password">
-                                <h5 class="card-title">Change Password</h5>
-                                <p>Change your account password here.</p>
-                                <!-- Add change password form here -->
+                                <h5 class="card-title mb-4">Change Password</h5>
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="change_password" value="1">
+                                    {% for field in password_form %}
+                                        <div class="mb-5">
+                                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                            {{ field|add_class:"form-control form-control-lg" }}
+                                            {% if field.errors %}
+                                                <div class="text-danger mt-2">
+                                                    {% for error in field.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="btn btn-primary btn-lg">Change Password</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -89,15 +123,20 @@
 <script>
     $(document).ready(function() {
         // Enable Bootstrap list functionality
-        var triggerTabList = [].slice.call(document.querySelectorAll('.list-group-item'))
+        var triggerTabList = [].slice.call(document.querySelectorAll('.list-group-item:not(#logout-link)'))
         triggerTabList.forEach(function (triggerEl) {
             var tabTrigger = new bootstrap.Tab(triggerEl)
-
             triggerEl.addEventListener('click', function (event) {
                 event.preventDefault()
                 tabTrigger.show()
             })
         })
+
+        // Handle logout link separately
+        $('#logout-link').on('click', function(event) {
+            event.preventDefault();
+            window.location.href = this.href;
+        });
 
         // Profile image upload preview
         $("#profileImageUpload").change(function() {

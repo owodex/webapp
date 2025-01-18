@@ -54,15 +54,16 @@
             </div>
 
             <div id="airtimeSection">
-                <form>
+                <form id="airtimeForm">
+                    {% csrf_token %}
                     <div class="mb-4">
                         <label for="airtimeNumber" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control form-control-lg" id="airtimeNumber" placeholder="Enter phone number">
+                        <input type="tel" class="form-control form-control-lg" id="airtimeNumber" name="phone_number" placeholder="Enter phone number" required>
                     </div>
                     <div class="mb-4">
                         <label for="airtimeNetwork" class="form-label">Select Network</label>
-                        <select class="form-select form-select-lg" id="airtimeNetwork">
-                            <option selected>Choose network</option>
+                        <select class="form-select form-select-lg" id="airtimeNetwork" name="network" required>
+                            <option value="">Choose network</option>
                             <option value="mtn">MTN</option>
                             <option value="airtel">Airtel</option>
                             <option value="glo">Glo</option>
@@ -73,7 +74,7 @@
                         <label for="airtimeAmount" class="form-label">Amount</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text">₦</span>
-                            <input type="number" class="form-control" id="airtimeAmount" placeholder="Enter amount">
+                            <input type="number" class="form-control" id="airtimeAmount" name="amount" placeholder="Enter amount" required>
                         </div>
                     </div>
                     <div class="text-center">
@@ -83,15 +84,16 @@
             </div>
 
             <div id="dataSection" style="display: none;">
-                <form>
+                <form id="dataForm">
+                    {% csrf_token %}
                     <div class="mb-4">
                         <label for="dataNumber" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control form-control-lg" id="dataNumber" placeholder="Enter phone number">
+                        <input type="tel" class="form-control form-control-lg" id="dataNumber" name="phone_number" placeholder="Enter phone number" required>
                     </div>
                     <div class="mb-4">
                         <label for="dataNetwork" class="form-label">Select Network</label>
-                        <select class="form-select form-select-lg" id="dataNetwork">
-                            <option selected>Choose network</option>
+                        <select class="form-select form-select-lg" id="dataNetwork" name="network" required>
+                            <option value="">Choose network</option>
                             <option value="mtn">MTN</option>
                             <option value="airtel">Airtel</option>
                             <option value="glo">Glo</option>
@@ -100,8 +102,8 @@
                     </div>
                     <div class="mb-4">
                         <label for="dataPlan" class="form-label">Select Data Plan</label>
-                        <select class="form-select form-select-lg" id="dataPlan">
-                            <option selected>Choose data plan</option>
+                        <select class="form-select form-select-lg" id="dataPlan" name="data_plan" required>
+                            <option value="">Choose data plan</option>
                             <option value="1gb">1GB</option>
                             <option value="2gb">2GB</option>
                             <option value="5gb">5GB</option>
@@ -112,7 +114,7 @@
                         <label for="dataAmount" class="form-label">Amount</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text">₦</span>
-                            <input type="number" class="form-control" id="dataAmount" placeholder="Enter amount">
+                            <input type="number" class="form-control" id="dataAmount" name="amount" placeholder="Enter amount" required>
                         </div>
                     </div>
                     <div class="text-center">
@@ -145,6 +147,60 @@
             dataSection.style.display = 'block';
             dataBtn.classList.replace('btn-secondary', 'btn-primary');
             airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+
+        const airtimeForm = document.getElementById('airtimeForm');
+        airtimeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('{% url "submit_airtime_request" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Airtime request submitted successfully. Transaction ID: ' + data.transaction_id);
+                    airtimeForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+
+        const dataForm = document.getElementById('dataForm');
+        dataForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('{% url "submit_data_request" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Data request submitted successfully. Transaction ID: ' + data.transaction_id);
+                    dataForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
         });
     });
 </script>

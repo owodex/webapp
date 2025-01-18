@@ -54,10 +54,11 @@
             </div>
 
             <div id="cableSection">
-                <form>
+                <form id="cableForm" data-url="{% url 'submit_cable_request' %}">
+                    {% csrf_token %}
                     <div class="mb-4">
                         <label for="cableProvider" class="form-label">Choose Provider</label>
-                        <select class="form-select form-select-lg" id="cableProvider">
+                        <select class="form-select form-select-lg" id="cableProvider" name="provider">
                             <option selected>Select provider</option>
                             <option value="dstv">DSTV</option>
                             <option value="gotv">GOtv</option>
@@ -66,11 +67,11 @@
                     </div>
                     <div class="mb-4">
                         <label for="smartCardNumber" class="form-label">Smart Card Number</label>
-                        <input type="text" class="form-control form-control-lg" id="smartCardNumber" placeholder="Enter smart card number">
+                        <input type="text" class="form-control form-control-lg" id="smartCardNumber" name="smart_card_number" placeholder="Enter smart card number">
                     </div>
                     <div class="mb-4">
                         <label for="cablePackage" class="form-label">Select Package</label>
-                        <select class="form-select form-select-lg" id="cablePackage">
+                        <select class="form-select form-select-lg" id="cablePackage" name="package">
                             <option selected>Choose package</option>
                             <option value="basic">Basic</option>
                             <option value="standard">Standard</option>
@@ -79,7 +80,11 @@
                     </div>
                     <div class="mb-4">
                         <label for="cableAccountName" class="form-label">Account Name</label>
-                        <input type="text" class="form-control form-control-lg" id="cableAccountName" placeholder="Enter account name">
+                        <input type="text" class="form-control form-control-lg" id="cableAccountName" name="account_name" placeholder="Enter account name">
+                    </div>
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" placeholder="Enter amount" required>
                     </div>
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary btn-lg">Pay</button>
@@ -88,10 +93,11 @@
             </div>
 
             <div id="electricitySection" style="display: none;">
-                <form>
+                <form id="electricityForm" data-url="{% url 'submit_electricity_request' %}">
+                    {% csrf_token %}
                     <div class="mb-4">
                         <label for="electricityOperator" class="form-label">Choose Operator</label>
-                        <select class="form-select form-select-lg" id="electricityOperator">
+                        <select class="form-select form-select-lg" id="electricityOperator" name="operator">
                             <option selected>Select operator</option>
                             <option value="ekedc">EKEDC</option>
                             <option value="ikedc">IKEDC</option>
@@ -100,11 +106,11 @@
                     </div>
                     <div class="mb-4">
                         <label for="meterNumber" class="form-label">Meter Number</label>
-                        <input type="text" class="form-control form-control-lg" id="meterNumber" placeholder="Enter meter number">
+                        <input type="text" class="form-control form-control-lg" id="meterNumber" name="meter_number" placeholder="Enter meter number">
                     </div>
                     <div class="mb-4">
                         <label for="electricityPlan" class="form-label">Choose Plan</label>
-                        <select class="form-select form-select-lg" id="electricityPlan">
+                        <select class="form-select form-select-lg" id="electricityPlan" name="plan">
                             <option selected>Select plan</option>
                             <option value="prepaid">Prepaid</option>
                             <option value="postpaid">Postpaid</option>
@@ -112,13 +118,13 @@
                     </div>
                     <div class="mb-4">
                         <label for="electricityAccountName" class="form-label">Account Name</label>
-                        <input type="text" class="form-control form-control-lg" id="electricityAccountName" placeholder="Enter account name">
+                        <input type="text" class="form-control form-control-lg" id="electricityAccountName" name="account_name" placeholder="Enter account name">
                     </div>
                     <div class="mb-4">
                         <label for="electricityAmount" class="form-label">Amount</label>
                         <div class="input-group input-group-lg">
                             <span class="input-group-text">₦</span>
-                            <input type="number" class="form-control" id="electricityAmount" placeholder="Enter amount to buy">
+                            <input type="number" class="form-control" id="electricityAmount" name="amount" placeholder="Enter amount to buy" required>
                         </div>
                     </div>
                     <div class="text-center">
@@ -138,19 +144,75 @@
         const electricityBtn = document.getElementById('electricityBtn');
         const cableSection = document.getElementById('cableSection');
         const electricitySection = document.getElementById('electricitySection');
-
+    
         cableBtn.addEventListener('click', function() {
             cableSection.style.display = 'block';
             electricitySection.style.display = 'none';
             cableBtn.classList.replace('btn-secondary', 'btn-primary');
             electricityBtn.classList.replace('btn-primary', 'btn-secondary');
         });
-
+    
         electricityBtn.addEventListener('click', function() {
             cableSection.style.display = 'none';
             electricitySection.style.display = 'block';
             electricityBtn.classList.replace('btn-secondary', 'btn-primary');
             cableBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+    
+        // Cable form submission
+        const cableForm = document.getElementById('cableForm');
+        cableForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+    
+            fetch(this.dataset.url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Cable request submitted successfully. Transaction ID: ' + data.transaction_id);
+                    cableForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    
+        // Electricity form submission
+        const electricityForm = document.getElementById('electricityForm');
+        electricityForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+    
+            fetch(this.dataset.url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Electricity request submitted successfully. Transaction ID: ' + data.transaction_id);
+                    electricityForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
         });
     });
 </script>
