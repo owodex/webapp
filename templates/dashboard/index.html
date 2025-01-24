@@ -109,13 +109,14 @@
         </div>
         <div class="modal-body">
           <form id="owodexTagForm">
+            {% csrf_token%}
             <div class="mb-3">
               <label for="owodexAmount" class="form-label">Amount</label>
-              <input type="number" class="form-control" id="owodexAmount" required>
+              <input type="number" class="form-control" id="owodexAmount" name="amount" required>
             </div>
             <div class="mb-3">
               <label for="owodexTag" class="form-label">Owodex Tag (Username)</label>
-              <input type="text" class="form-control" id="owodexTag" required>
+              <input type="text" class="form-control" id="owodexTag" name="tag" required>
             </div>
             <button type="submit" class="btn btn-primary">Transfer</button>
           </form>
@@ -142,6 +143,7 @@
           </div>
   
           <form id="newBeneficiaryForm">
+            {% csrf_token %}
             <div class="mb-3">
               <label for="bankAmount" class="form-label">Amount</label>
               <input type="number" class="form-control" id="bankAmount" required>
@@ -162,6 +164,7 @@
           </form>
   
           <form id="savedBeneficiaryForm" style="display: none;">
+            {% csrf_token %}
             <div class="mb-3">
               <label for="savedBeneficiarySelect" class="form-label">Select Beneficiary</label>
               <select class="form-select" id="savedBeneficiarySelect" required>
@@ -186,6 +189,8 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      axios.defaults.headers.common['X-CSRFToken'] = csrftoken;
         // ... existing balance toggle code ...
 
         // Transfer modals functionality
@@ -215,48 +220,72 @@
             loadBeneficiaries();
         });
 
-        // Handle form submissions
-        document.getElementById('owodexTagForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const amount = document.getElementById('owodexAmount').value;
-            const tag = document.getElementById('owodexTag').value;
+      // Replace the existing owodexTagForm event listener with this:
+      document.getElementById('owodexTagForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('owodexAmount').value;
+        const tag = document.getElementById('owodexTag').value;
 
-            axios.post('/api/owodex-tag-transfer/', {
-                amount: amount,
-                tag: tag
-            })
+        if (!amount || !tag) {
+            alert('Please enter both amount and Owodex tag.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('amount', amount);
+        formData.append('tag', tag);
+
+        axios.post('{% url "owodex_tag_transfer" %}', formData)
             .then(function (response) {
                 alert(response.data.message);
                 owodexTagModal.hide();
                 updateBalance();
+                updateTransactionList();
             })
             .catch(function (error) {
-                alert(error.response.data.message);
+                alert(error.response.data.message || 'An error occurred during the transfer.');
             });
-        });
+    });
+
+// Add this function to update the transaction list
+function updateTransactionList() {
+    // Fetch the updated transaction list from the server
+    axios.get('/api/get-transactions/')
+    .then(function (response) {
+        // Update the transaction list in the DOM
+        const transactionList = document.getElementById('transactionList');
+        transactionList.innerHTML = response.data.html;
+    })
+    .catch(function (error) {
+        console.error('Error updating transaction list:', error);
+    });
+}
 
         document.getElementById('newBeneficiaryForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const amount = document.getElementById('bankAmount').value;
-            const accountNumber = document.getElementById('accountNumber').value;
-            const bankName = document.getElementById('bankName').value;
-            const saveBeneficiary = document.getElementById('saveBeneficiary').checked;
-
-            axios.post('/api/bank-transfer/', {
-                amount: amount,
-                account_number: accountNumber,
-                bank_name: bankName,
-                save_beneficiary: saveBeneficiary
-            })
-            .then(function (response) {
-                alert(response.data.message);
-                bankTransferModal.hide();
-                updateBalance();
-            })
-            .catch(function (error) {
-                alert(error.response.data.message);
-            });
-        });
+          e.preventDefault();
+          const amount = document.getElementById('bankAmount').value;
+          const accountNumber = document.getElementById('accountNumber').value;
+          const bankName = document.getElementById('bankName').value;
+          const saveBeneficiary = document.getElementById('saveBeneficiary').checked;
+      
+          axios.post('/api/bank-transfer/', {
+              amount: amount,
+              account_number: accountNumber,
+              bank_name: bankName,
+              save_beneficiary: saveBeneficiary
+          })
+          .then(function (response) {
+              alert(response.data.message);
+              bankTransferModal.hide();
+              updateBalance();
+              if (saveBeneficiary) {
+                  loadBeneficiaries(); // Reload the beneficiaries list
+              }
+          })
+          .catch(function (error) {
+              alert(error.response.data.message);
+          });
+      });
 
         document.getElementById('savedBeneficiaryForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -308,7 +337,7 @@
         const balanceAmount = document.getElementById('balanceAmount');
         const toggleBalance = document.getElementById('toggleBalance');
         let isHidden = true;
-        const actualBalance = '₦50,000.00'; // You might want to pass this from the backend
+        const actualBalance = '{{ wallet_balance|floatformat:2|default:"0.00" }}';
 
         toggleBalance.addEventListener('click', function() {
             if (isHidden) {

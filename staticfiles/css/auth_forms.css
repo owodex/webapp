@@ -1,0 +1,74 @@
+.auth-form-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.auth-form-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-form-container .form-group {
+    margin-bottom: 20px;
+}
+
+.auth-form-container label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.auth-form-container input[type="text"],
+.auth-form-container input[type="email"],
+.auth-form-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.auth-form-container button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.auth-form-container button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+.auth-form-container .text-danger {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.auth-form-container .auth-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.auth-form-container .auth-links a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.auth-form-container .auth-links a:hover {
+    text-decoration: underline;
+}

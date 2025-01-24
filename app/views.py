@@ -17,6 +17,8 @@ from django.db import transaction
 from decimal import Decimal, InvalidOperation
 from django.views.decorators.csrf import csrf_protect
 import uuid
+import json
+from django.db.models import Q, Sum
 from django.http import HttpResponseBadRequest
 
 
@@ -81,26 +83,55 @@ def signup(request):
         phone_number = request.POST.get('phone_number')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
+        referral_code = request.POST.get('referral_code')
 
         if password == confirm_password:
-            user = CustomUser.objects.create(
-                username=username,
-                email=email,
-                password=make_password(password),
-                first_name=full_name.split()[0],
-                last_name=' '.join(full_name.split()[1:]),
-                phone_number=phone_number,
-            )
+            with transaction.atomic():
+                # Check if referral code is valid
+                referrer = None
+                if referral_code:
+                    try:
+                        referrer = CustomUser.objects.get(referral_code=referral_code)
+                    except CustomUser.DoesNotExist:
+                        pass
 
-            # Create the signup bonus transaction
-            Transaction.objects.create(
-                user=user,
-                service='Signup Bonus',
-                invoice_id=f'SB{user.id}{int(timezone.now().timestamp())}',
-                amount=2000,
-                transaction_type='credit',
-                date=timezone.now()
-            )
+                user = CustomUser.objects.create(
+                    username=username,
+                    email=email,
+                    password=make_password(password),
+                    first_name=full_name.split()[0],
+                    last_name=' '.join(full_name.split()[1:]),
+                    phone_number=phone_number,
+                    referred_by=referrer,
+                    bonus_amount=2000  # Sign up bonus
+                )
+
+                # Create the signup bonus transaction
+                Transaction.objects.create(
+                    user=user,
+                    service='Signup Bonus',
+                    invoice_id=f'SB{user.id}{int(timezone.now().timestamp())}',
+                    amount=2000,
+                    transaction_type='credit',
+                    date=timezone.now(),
+                    status='completed'
+                )
+
+                # If user was referred, add referral bonus to referrer
+                if referrer:
+                    referral_bonus = 500
+                    referrer.bonus_amount += referral_bonus
+                    referrer.save()
+
+                    Transaction.objects.create(
+                        user=referrer,
+                        service='Referral Bonus',
+                        invoice_id=f'RB{referrer.id}{int(timezone.now().timestamp())}',
+                        amount=referral_bonus,
+                        transaction_type='credit',
+                        date=timezone.now(),
+                        status='completed'
+                    )
 
             # Log the user in
             login(request, user)
@@ -149,15 +180,22 @@ def terms(request):
 def privacy_policy(request):
     return render(request, "privacy_policy.html")
 
+from .models import Wallet  # Add this import at the top of the file if not already present
+
+@login_required
 def dashboard(request):
     # Get the 5 most recent transactions for the current user
     recent_transactions = Transaction.objects.filter(user=request.user).order_by('-date')[:5]
 
+    # Get or create the user's wallet
+    wallet, created = Wallet.objects.get_or_create(user=request.user)
+
     context = {
         'recent_transactions': recent_transactions,
+        'wallet_balance': wallet.balance,
     }
 
-    return render(request, 'dashboard/index.html', context) 
+    return render(request, 'dashboard/index.html', context)
 
 
 def services(request):
@@ -190,8 +228,30 @@ def airtime_data(request):
 def pay_bills(request):
     return render(request, 'dashboard/pay-bills.html')
 
+@login_required
 def bonus(request):
-    return render(request, 'dashboard/bonus.html')
+    user = request.user
+    
+    # Get signup bonus
+    signup_bonus = Transaction.objects.filter(user=user, service='Signup Bonus').first()
+    
+    # Get referral bonuses
+    referral_bonuses = Transaction.objects.filter(user=user, service='Referral Bonus').order_by('-date')
+    
+    # Calculate total bonus
+    total_bonus = user.bonus_amount
+    
+    # Calculate total referral bonus
+    total_referral_bonus = referral_bonuses.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    context = {
+        'total_bonus': total_bonus,
+        'signup_bonus': signup_bonus,
+        'referral_bonuses': referral_bonuses,
+        'total_referral_bonus': total_referral_bonus,
+    }
+    
+    return render(request, 'dashboard/bonus.html', context)
 
 def trade_giftcard(request):
     return render(request, 'dashboard/trade_giftcards.html')
@@ -232,7 +292,7 @@ def owodex_tag_transfer(request):
     tag = request.POST.get('tag')
 
     if not amount or not tag:
-        return JsonResponse({'status': 'error', 'message': 'Invalid input'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'Amount and tag are required'}, status=400)
 
     try:
         amount = Decimal(amount)
@@ -262,7 +322,8 @@ def owodex_tag_transfer(request):
             wallet=sender_wallet,
             amount=amount,
             transaction_type='debit',
-            service='money_transfer',
+            service='money transfer',
+            status='completed',
             invoice_id=f'OT{Transaction.objects.count() + 1:06d}',
         )
         Transaction.objects.create(
@@ -271,6 +332,7 @@ def owodex_tag_transfer(request):
             amount=amount,
             transaction_type='credit',
             service='money_transfer',
+            status='completed',
             invoice_id=f'OT{Transaction.objects.count() + 1:06d}',
         )
 
@@ -279,56 +341,67 @@ def owodex_tag_transfer(request):
 @login_required
 @require_POST
 @csrf_protect
+@transaction.atomic
 def bank_transfer(request):
-    amount = request.POST.get('amount')
-    account_number = request.POST.get('account_number')
-    bank_name = request.POST.get('bank_name')
-    save_beneficiary = request.POST.get('save_beneficiary') == 'true'
+    data = json.loads(request.body)
+    amount = Decimal(data.get('amount'))
+    account_number = data.get('account_number')
+    bank_name = data.get('bank_name')
+    save_beneficiary = data.get('save_beneficiary')
 
-    if not amount or not account_number or not bank_name:
-        return JsonResponse({'status': 'error', 'message': 'Invalid input'}, status=400)
+    wallet = Wallet.objects.get(user=request.user)
 
-    try:
-        amount = Decimal(amount)
-    except ValueError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid amount'}, status=400)
-
-    wallet, _ = Wallet.objects.get_or_create(user=request.user)
+     # Generate a unique invoice ID
+    invoice_id = str(uuid.uuid4().hex)[:20]
 
     if wallet.balance < amount:
-        return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Insufficient balance'
+        }, status=400)
 
-    with transaction.atomic():
+    try:
+        # Deduct amount from wallet
         wallet.balance -= amount
         wallet.save()
 
+        # Create transaction record
         Transaction.objects.create(
             user=request.user,
-            wallet=wallet,
+            service='bank transfer',
             amount=amount,
             transaction_type='debit',
-            service='money_transfer',
-            invoice_id=f'BT{Transaction.objects.count() + 1:06d}',
+            status='pending',
+            invoice_id =  invoice_id,
+            account_number=account_number,
+            bank_name=bank_name,
         )
 
+        # Save beneficiary if requested
         if save_beneficiary:
             Beneficiary.objects.create(
                 user=request.user,
+                name=f"{account_number} - {bank_name}",
                 account_number=account_number,
-                bank_name=bank_name,
-                name=f"Beneficiary {account_number[-4:]}"
+                bank_name=bank_name
             )
 
-    # Here you would typically integrate with a payment gateway to complete the bank transfer
-    # For this example, we'll assume the transfer is successful
-
-    return JsonResponse({'status': 'success', 'message': 'Transfer successful'})
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Bank transfer completed successfully'
+        })
+    except Exception as e:
+        # If an error occurs, rollback the transaction
+        transaction.set_rollback(True)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
 
 @login_required
 def get_beneficiaries(request):
     beneficiaries = Beneficiary.objects.filter(user=request.user).values('id', 'name', 'account_number', 'bank_name')
     return JsonResponse(list(beneficiaries), safe=False)
-
 
 @login_required
 @transaction.atomic
@@ -338,8 +411,30 @@ def submit_airtime_request(request):
         network = request.POST.get('network')
         amount = request.POST.get('amount')
 
+        try:
+            amount = Decimal(amount)
+        except InvalidOperation:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Invalid amount'
+            }, status=400)
+
+        # Get or create user's wallet
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+
+        # Check if user has sufficient balance
+        if wallet.balance < amount:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Insufficient balance'
+            }, status=400)
+
         # Generate a unique invoice ID
         invoice_id = str(uuid.uuid4().hex)[:20]
+
+        # Deduct amount from wallet
+        wallet.balance -= amount
+        wallet.save()
 
         # Create a new transaction
         new_transaction = Transaction.objects.create(
@@ -369,17 +464,41 @@ def submit_airtime_request(request):
         'message': 'Invalid request method'
     }, status=400)
 
+@login_required
 @require_POST
+@transaction.atomic
 def submit_data_request(request):
     phone_number = request.POST.get('phone_number')
     network = request.POST.get('network')
     data_plan = request.POST.get('data_plan')
     amount = request.POST.get('amount')
 
+    try:
+        amount = Decimal(amount)
+    except InvalidOperation:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Invalid amount'
+        }, status=400)
+
+    # Get or create user's wallet
+    wallet, _ = Wallet.objects.get_or_create(user=request.user)
+
+    # Check if user has sufficient balance
+    if wallet.balance < amount:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Insufficient balance'
+        }, status=400)
+
     # Generate a unique invoice ID
     invoice_id = str(uuid.uuid4().hex)[:20]
     
     try:
+        # Deduct amount from wallet
+        wallet.balance -= amount
+        wallet.save()
+
         transaction = Transaction.objects.create(
             user=request.user,
             service='data',
@@ -403,6 +522,8 @@ def submit_data_request(request):
             'transaction_id': transaction.invoice_id
         })
     except Exception as e:
+        # If an error occurs, rollback the transaction
+        transaction.set_rollback(True)
         return JsonResponse({
             'status': 'error',
             'message': str(e)
@@ -565,3 +686,33 @@ def trade_giftcard(request):
         })
 
     return render(request, 'dashboard/trade_giftcards.html')
+
+def search(request):
+    query = request.GET.get('q', '').lower()
+    if query:
+        # Define a dictionary mapping search terms to their corresponding URLs
+        service_urls = {
+            'airtime': reverse('airtime_data'),
+            'data': reverse('airtime_data'),
+            'cable': reverse('pay_bills'),  # Assuming this is the URL for cable bills
+            'tv': reverse('pay_bills'),     # Another term for cable
+            'electricity': reverse('pay_bills'),  # Assuming this is the URL for electricity bills
+            'giftcard': reverse('giftcards'),
+            'gift card': reverse('giftcards'),
+            'transfer': reverse('bank_transfer'),
+            'withdraw': reverse('bank_transfer'),
+            'transaction': reverse('transactions'),
+            'transactions': reverse('transactions'),
+            'bonus': reverse('bonus'),
+            'reward': reverse('bonus'),
+        }
+
+        # Check if the query matches any of our defined services
+        for key, url in service_urls.items():
+            if key in query:
+                return redirect(url)
+
+        # If no match is found, redirect to a general search results page or show an error
+        return render(request, 'dashboard/services.html', {'query': query})
+
+    return redirect('dashboard')

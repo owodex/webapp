@@ -42,6 +42,7 @@ urlpatterns = [
     path('pay_bills/', pay_bills, name ='pay_bills'),
     path('airtime_data/', airtime_data, name ='airtime_data'),
     path('bonus/', bonus, name ='bonus'),
+    path('search/', search, name='search'),
     path('trade_giftcard/', trade_giftcard, name ='trade_giftcard'),
     path('admin/send-notification/', send_notification, name="send_notification"),
     path('api/owodex-tag-transfer/', owodex_tag_transfer, name='owodex_tag_transfer'),

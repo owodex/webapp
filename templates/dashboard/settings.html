@@ -64,6 +64,10 @@
                                         <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" value="{{ user.email }}">
                                     </div>
                                     <div class="mb-5">
+                                        <label for="username" class="form-label">Username</label>
+                                        <input type="username" class="form-control" id="username" name="username" placeholder="Enter your email" readonly value="{{ user.username }}">
+                                    </div>
+                                    <div class="mb-5">
                                         <label for="phoneNumber" class="form-label">Phone Number</label>
                                         <input type="tel" class="form-control" id="phoneNumber" name="phone_number" placeholder="Enter your phone number" value="{{ user.phone_number }}">
                                     </div>

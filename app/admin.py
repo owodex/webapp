@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Transaction, GiftCardImage, GiftCardTransaction, Notification, CableRequest, ElectricityRequest, Wallet, AirtimeRequest, DataRequest
+from .models import CustomUser, Transaction, Beneficiary, GiftCardImage, GiftCardTransaction, Notification, CableRequest, ElectricityRequest, Wallet, AirtimeRequest, DataRequest
 from django.urls import path
 from .views import send_notification
+from django.db import models
 
 
 class CustomUserAdmin(UserAdmin):
@@ -10,17 +11,17 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ['is_staff', 'is_active']
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username', 'full_name', 'phone_number')}),
+        ('Personal info', {'fields': ('username', 'first_name', 'last_name', 'phone_number')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'full_name', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('email', 'username', 'first_name', 'last_name', 'password1', 'password2', 'is_staff', 'is_active')}
         ),
     )
-    search_fields = ('email', 'username', 'full_name')
+    search_fields = ('email', 'username', 'first_name', 'last_name')
     ordering = ('email',)
 
 admin.site.register(CustomUser, CustomUserAdmin)
@@ -87,8 +88,8 @@ class GiftCardTransactionInline(admin.StackedInline):
     model = GiftCardTransaction
     can_delete = False
     verbose_name_plural = 'Gift Card Transaction'
-    fields = ('giftcard_name', 'currency', 'card_type', 'denomination', 'amount')
-    readonly_fields = ('giftcard_name', 'currency', 'card_type', 'denomination', 'amount')
+    fields = ('giftcard_name', 'currency', 'card_type', 'denomination', 'amount', 'status')
+    readonly_fields = ('giftcard_name', 'currency', 'card_type', 'denomination', 'amount', 'status')
 
 class GiftCardImageInline(admin.TabularInline):
     model = GiftCardImage
@@ -122,6 +123,10 @@ class TransactionAdmin(admin.ModelAdmin):
             request = obj.electricity_request
             if request:
                 return f"{request.operator} - {request.plan} - ₦{request.amount}"
+        elif obj.service == 'giftcard':
+            giftcard = obj.giftcard_transaction
+            if giftcard:
+                return f"{giftcard.giftcard_name} - {giftcard.currency} - {giftcard.amount}"
         return '-'
     get_request_details.short_description = 'Request Details'
 
@@ -141,6 +146,26 @@ class TransactionAdmin(admin.ModelAdmin):
         if not obj:
             return []
         return [inline(self.model, self.admin_site) for inline in self.inlines]
+    
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            service_display=models.Case(
+                models.When(service='bank transfer', then=models.Value('Bank Transfer')),
+                default=models.F('service'),
+                output_field=models.CharField(),
+            )
+        )
+        return queryset
+
+    def service(self, obj):
+        return obj.service_display
+    service.admin_order_field = 'service_display'
+
+@admin.register(Beneficiary)
+class BeneficiaryAdmin(admin.ModelAdmin):
+    list_display = ('user', 'name', 'account_number', 'bank_name')
+    search_fields = ('user__username', 'user__email', 'name', 'account_number', 'bank_name')
 
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Wallet)

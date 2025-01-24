@@ -1,0 +1,14 @@
+{% extends 'dashboard/main.html' %}
+
+{% block maincontent %}
+<h2>Search Results for "{{ query }}"</h2>
+{% if transactions %}
+    <ul>
+    {% for transaction in transactions %}
+        <li>{{ transaction }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No results found.</p>
+{% endif %}
+{% endblock %}

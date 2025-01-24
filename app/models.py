@@ -3,6 +3,7 @@ from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth import get_user_model
 from django.conf import settings
+import uuid
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -23,21 +24,32 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = PhoneNumberField(blank=True, null=True)
     username = models.CharField(max_length=150, unique=True)
+    referral_code = models.CharField(max_length=10, unique=True, blank=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    bonus_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     objects = CustomUserManager()
 
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            self.referral_code = self.generate_referral_code()
+        super().save(*args, **kwargs)
+
+    def generate_referral_code(self):
+        return uuid.uuid4().hex[:8].upper()
+
     def __str__(self):
         return self.email
 
 class Wallet(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"{self.user.username}'s Wallet"
+        return f"{self.user.username}'s Wallet - {self.balance} Naira"
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = (
@@ -54,6 +66,7 @@ class Transaction(models.Model):
         ('data', 'Data Purchase'),
         ('cable', 'Cable TV'),
         ('electricity', 'Electricity Bill'),
+        ('bank transfer', 'Bank Transfer')
     )
 
     STATUS_TYPES = (
@@ -67,6 +80,8 @@ class Transaction(models.Model):
     service = models.CharField(max_length=50, choices=SERVICE_TYPES)
     invoice_id = models.CharField(max_length=20, unique=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    account_number = models.CharField(max_length=20, blank=True, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions', null=True)
     status = models.CharField(max_length=20, choices=STATUS_TYPES, default='pending')
@@ -184,6 +199,7 @@ class GiftCardTransaction(models.Model):
 
     transaction = models.OneToOneField('Transaction', on_delete=models.CASCADE, related_name='giftcard_transaction')
     giftcard_name = models.CharField(max_length=100)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
     currency = models.CharField(max_length=2, choices=CURRENCY_CHOICES)
     card_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     denomination = models.CharField(max_length=10)

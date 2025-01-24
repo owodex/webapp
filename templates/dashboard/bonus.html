@@ -1,5 +1,6 @@
 {% extends 'dashboard/main.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block extra_css %}
 <style>
@@ -74,6 +75,12 @@
         font-size: 0.9rem;
         border-radius: 10px;
     }
+    .referral-code {
+        background-color: #e9ecef;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-weight: bold;
+    }
 </style>
 {% endblock %}
 
@@ -85,11 +92,12 @@
                 <div class="total-bonus">
                     <div class="total-bonus-heading">Total Bonus</div>
                 </div>
-                <div class="total-bonus-amount">₦2,000.00</div>
+                <div class="total-bonus-amount">₦{{ total_bonus|floatformat:2|intcomma }}</div>
             </div>
 
             <h2 class="all-bonuses-heading mb-4">All Bonuses</h2>
 
+            {% if signup_bonus %}
             <div class="bonus-item">
                 <div class="bonus-info">
                     <div class="bonus-icon">
@@ -97,11 +105,12 @@
                     </div>
                     <div class="bonus-details">
                         <h5 class="mb-0">Sign Up Bonus</h5>
-                        <span class="bonus-amount fw-bolder">₦2,000</span>
+                        <span class="bonus-amount fw-bolder">₦{{ signup_bonus.amount|floatformat:2|intcomma }}</span>
                     </div>
                 </div>
-                <button class="btn btn-primary btn-bonus">Redeem</button>
+                <button class="btn btn-primary btn-bonus" disabled>Redeemed</button>
             </div>
+            {% endif %}
             
             <div class="bonus-item">
                 <div class="bonus-info">
@@ -111,10 +120,53 @@
                     </div>
                     <div class="bonus-details">
                         <h5 class="mb-0">Referral Bonus</h5>
-                        <span class="bonus-amount">₦0.00</span>
+                        <span class="bonus-amount">₦{{ total_referral_bonus|floatformat:2|intcomma }}</span>
                     </div>
                 </div>
-                <button class="btn btn-secondary btn-bonus">View All</button>
+                <button class="btn btn-secondary btn-bonus" data-bs-toggle="modal" data-bs-target="#referralModal">View All</button>
+            </div>
+
+            <div class="mt-4">
+                <h5>Your Referral Code</h5>
+                <p>Share this code with your friends to earn ₦500 for each referral:</p>
+                <div class="referral-code">{{ user.referral_code }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Referral Modal -->
+<div class="modal fade" id="referralModal" tabindex="-1" aria-labelledby="referralModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="referralModalLabel">Referral Bonuses</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bonus in referral_bonuses %}
+                        <tr>
+                            <td>{{ bonus.date|date:"M d, Y" }}</td>
+                            <td>₦{{ bonus.amount|floatformat:2|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No referral bonuses yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

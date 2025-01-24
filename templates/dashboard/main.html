@@ -26,6 +26,10 @@
     <!-- Customized Bootstrap Stylesheet -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
 
@@ -62,10 +66,12 @@
                     <a href="{% url 'transactions' %}" class="nav-item nav-link">Transactions</a>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="input-group me-3 d-none d-lg-flex">
-                        <input type="text" class="form-control" placeholder="Search...">
-                        <button class="btn btn-primary" type="button"><i class="fa fa-search"></i></button>
-                    </div>
+                    <form id="desktop-search-form" action="{% url 'search' %}" method="GET" class="me-3 d-none d-lg-flex">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="desktop-search-input" name="q" placeholder="Search for services...">
+                            <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                        </div>
+                    </form>
                     <a href="#" class="btn btn-sm btn-primary me-2 d-lg-none" id="mobileSearchBtn"><i class="fa fa-search"></i></a>
                     <a href="#" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#notificationsModal"><i class="fa fa-bell"></i></a>
                     <a href="{% url 'settings' %}" class="btn btn-sm btn-primary me-2"><i class="fa fa-cog"></i></a>
@@ -85,9 +91,9 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form>
+                        <form id="search-form" action="{% url 'search' %}" method="GET">
                             <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Search...">
+                                <input type="text" class="form-control" id="search-input" name="q" placeholder="Search for services...">
                                 <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
                             </div>
                         </form>
@@ -276,5 +282,76 @@
           });
       });
       </script>
+    
+    <script>
+    $(document).ready(function() {
+        var searchTerms = [
+            "Airtime", "Data", "Electricity", "Transfer", "Cable", "Giftcards", "Transaction"
+        ];
+    
+        $("#search-input").autocomplete({
+            source: searchTerms,
+            minLength: 1,
+            select: function(event, ui) {
+                redirectToService(ui.item.value);
+            }
+        });
+    
+        $("#search-form").on("submit", function(e) {
+            e.preventDefault();
+            var searchTerm = $("#search-input").val().toLowerCase();
+            redirectToService(searchTerm);
+        });
+    
+        function redirectToService(service) {
+            service = service.toLowerCase();
+            if (service.includes('airtime') || service.includes('data')) {
+                window.location.href = "{% url 'airtime_data' %}";
+            } else if (service.includes('electricity')) {
+                window.location.href = "{% url 'submit_electricity_request' %}";
+            } else if (service.includes('transfer')) {
+                window.location.href = "{% url 'bank_transfer' %}";
+            } else if (service.includes('cable')) {
+                window.location.href = "{% url 'submit_electricity_request' %}";
+            } else if (service.includes('giftcard')) {
+                window.location.href = "{% url 'trade_giftcard' %}";
+            } else if (service.includes('transaction')) {
+                window.location.href = "{% url 'transactions' %}";
+            } else {
+                    // If no match, redirect to the services page
+                    window.location.href = "{% url 'services' %}";
+            }
+        }
+    
+        // Handle mobile search button click
+        $("#mobileSearchBtn").on("click", function(e) {
+            e.preventDefault();
+            $('#mobileSearchModal').modal('show');
+        });
+    
+        // Handle search form submission in the mobile modal
+        $("#mobileSearchModal form").on("submit", function(e) {
+            e.preventDefault();
+            var searchTerm = $("#mobileSearchModal input[name='q']").val().toLowerCase();
+            redirectToService(searchTerm);
+            $('#mobileSearchModal').modal('hide');
+        });
+
+        // Handle desktop search
+        $("#desktop-search-input").autocomplete({
+            source: searchTerms,
+            minLength: 1,
+            select: function(event, ui) {
+                redirectToService(ui.item.value);
+            }
+        });
+
+        $("#desktop-search-form").on("submit", function(e) {
+            e.preventDefault();
+            var searchTerm = $("#desktop-search-input").val().toLowerCase();
+            redirectToService(searchTerm);
+        });
+    });
+    </script>
 </body>
 </html>
