@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.db import models
+from django.db import models, transaction
 from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth import get_user_model
 from django.conf import settings
 import uuid
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -79,7 +81,7 @@ class Transaction(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     service = models.CharField(max_length=50, choices=SERVICE_TYPES)
     invoice_id = models.CharField(max_length=20, unique=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
     account_number = models.CharField(max_length=20, blank=True, null=True)
     bank_name = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
@@ -91,6 +93,19 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ['-date']
+
+    def update_wallet_on_completion(self):
+        if self.status == 'completed' and self.service == 'giftcard':
+            wallet, created = Wallet.objects.get_or_create(user=self.user)
+            wallet.balance += self.amount
+            wallet.save()
+
+@receiver(pre_save, sender=Transaction)
+def transaction_pre_save(sender, instance, **kwargs):
+    if instance.id:  # Check if this is an existing instance
+        old_instance = Transaction.objects.get(id=instance.id)
+        if old_instance.status != 'completed' and instance.status == 'completed':
+            instance.update_wallet_on_completion()
 
 class AirtimeRequest(models.Model):
     NETWORK_CHOICES = (
@@ -203,7 +218,7 @@ class GiftCardTransaction(models.Model):
     currency = models.CharField(max_length=2, choices=CURRENCY_CHOICES)
     card_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     denomination = models.CharField(max_length=10)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

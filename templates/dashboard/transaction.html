@@ -13,7 +13,7 @@
             </div>
             <div class="col-md-6">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search by Invoice ID" id="searchTransactions">
+                    <input type="text" class="form-control" placeholder="Search by Service" id="searchTransactions">
                     <button class="btn btn-outline-secondary" type="button" id="searchButton">
                         <i class="fas fa-search"></i>
                     </button>
@@ -77,32 +77,147 @@
         </nav>
         {% endif %}
     </div>
+    <a id="downloadLink" style="display: none;"></a>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const downloadBtn = document.getElementById('downloadTransactions');
         const searchInput = document.getElementById('searchTransactions');
         const searchBtn = document.getElementById('searchButton');
+        const tableBody = document.querySelector('.table tbody');
+        const noTransactionsRow = '<tr><td colspan="5" class="text-center">No transactions found.</td></tr>';
+
+        function filterTransactions(searchTerm) {
+            const rows = tableBody.querySelectorAll('tr');
+            let found = false;
+
+            rows.forEach(row => {
+                const serviceCell = row.querySelector('td:nth-child(2)');
+                if (serviceCell) {
+                    const service = serviceCell.textContent.toLowerCase();
+                    if (service.includes(searchTerm.toLowerCase())) {
+                        row.style.display = '';
+                        found = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+
+            if (!found) {
+                tableBody.innerHTML = noTransactionsRow;
+            } else if (tableBody.innerHTML === noTransactionsRow) {
+                location.reload(); // Reload to show all transactions if previously no results were found
+            }
+        }
+
+        function getTableData() {
+            const table = document.querySelector('.table');
+            let data = [];
+            for (let i = 0; i < table.rows.length; i++) {
+                let row = [], cols = table.rows[i].cells;
+                for (let j = 0; j < cols.length; j++) {
+                    row.push(cols[j].innerText);
+                }
+                data.push(row);
+            }
+            return data;
+        }
+
+        function showLoading() {
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            downloadBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+            downloadBtn.disabled = false;
+        }
 
         downloadBtn.addEventListener('click', function() {
-            // Implement download functionality
-            alert('Download functionality to be implemented');
+            showLoading();
+
+            const logoImg = new Image();
+            logoImg.src = "{% static 'img/OWODEX app logo.png' %}";
+            
+            logoImg.onload = function() {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const data = getTableData();
+                    
+                    // Add logo
+                    const logoAspectRatio = logoImg.width / logoImg.height;
+                    const logoWidth = 40;
+                    const logoHeight = logoWidth / logoAspectRatio;
+                    doc.addImage(logoImg, 'PNG', 10, 10, logoWidth, logoHeight);
+
+                    // Set primary color
+                    doc.setDrawColor(254, 161, 22); // #FEA116
+                    doc.setTextColor(254, 161, 22); // #FEA116
+
+                    // Add title
+                    doc.setFontSize(18);
+                    doc.text("Transactions", doc.internal.pageSize.width / 2, 50, { align: 'center' });
+
+                    // Reset text color for table content
+                    doc.setTextColor(0);
+
+                    // Add table
+                    doc.autoTable({
+                        head: [data[0]],
+                        body: data.slice(1),
+                        startY: 60,
+                        headStyles: { fillColor: [254, 161, 22] },
+                        alternateRowStyles: { fillColor: [255, 255, 255] },
+                        bodyStyles: { textColor: [0, 0, 0] },
+                        columnStyles: {
+                            0: { cellWidth: 'auto' },
+                            1: { cellWidth: 'auto' },
+                            2: { cellWidth: 'auto' },
+                            3: { cellWidth: 'auto' },
+                            4: { cellWidth: 'auto' }
+                        },
+                        didDrawPage: function(data) {
+                            // Add page number at the bottom
+                            doc.setFontSize(10);
+                            doc.text('Page ' + data.pageCount, data.settings.margin.left, doc.internal.pageSize.height - 10);
+                        }
+                    });
+                    
+                    doc.save("owodex_transactions.pdf");
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    alert('An error occurred while generating the PDF. Please try again.');
+                } finally {
+                    hideLoading();
+                }
+            };
+
+            logoImg.onerror = function() {
+                console.error('Error loading logo');
+                hideLoading();
+                alert('An error occurred while loading the logo. Please try again.');
+            };
         });
 
         searchBtn.addEventListener('click', function() {
             const searchTerm = searchInput.value.trim();
-            if (searchTerm) {
-                // Implement search functionality
-                alert('Searching for Invoice ID: ' + searchTerm);
-            }
+            filterTransactions(searchTerm);
         });
 
-        searchInput.addEventListener('keypress', function(e) {
+        searchInput.addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
                 searchBtn.click();
+            } else {
+                const searchTerm = this.value.trim();
+                filterTransactions(searchTerm);
             }
         });
     });

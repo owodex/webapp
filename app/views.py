@@ -18,6 +18,7 @@ from decimal import Decimal, InvalidOperation
 from django.views.decorators.csrf import csrf_protect
 import uuid
 import json
+import logging
 from django.db.models import Q, Sum
 from django.http import HttpResponseBadRequest
 
@@ -204,7 +205,7 @@ def services(request):
 @login_required
 def transactions(request):
     transactions_list = Transaction.objects.filter(user=request.user)
-    paginator = Paginator(transactions_list, 10)  # Show 10 transactions per page
+    paginator = Paginator(transactions_list, 20)  # Show 10 transactions per page
 
     page_number = request.GET.get('page')
     transactions = paginator.get_page(page_number)
@@ -244,17 +245,66 @@ def bonus(request):
     # Calculate total referral bonus
     total_referral_bonus = referral_bonuses.aggregate(Sum('amount'))['amount__sum'] or 0
 
+    
+    # Check if user is eligible for withdrawal
+    total_giftcard_transactions = GiftCardTransaction.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
+    user_eligible = total_giftcard_transactions >= 100000
+
     context = {
         'total_bonus': total_bonus,
         'signup_bonus': signup_bonus,
         'referral_bonuses': referral_bonuses,
         'total_referral_bonus': total_referral_bonus,
+        'user_eligible': user_eligible,
     }
     
     return render(request, 'dashboard/bonus.html', context)
 
-def trade_giftcard(request):
-    return render(request, 'dashboard/trade_giftcards.html')
+logger = logging.getLogger(__name__)
+
+@require_POST
+def withdraw_bonus(request):
+    user = request.user
+    total_bonus = user.bonus_amount
+    
+    if total_bonus <= 0:
+        return JsonResponse({'success': False, 'error': 'No bonus available for withdrawal.'})
+
+    total_giftcard_transactions = GiftCardTransaction.objects.filter(user=user, status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    
+    logger.info(f"User {user.id} - Total giftcard transactions: {total_giftcard_transactions}")
+    
+    if total_giftcard_transactions < 100000:
+        error_message = (f"You need to complete a giftcard transaction of at least ₦100,000 to withdraw bonus. "
+                         f"Your current total: ₦{total_giftcard_transactions}")
+        logger.warning(f"User {user.id} - Withdrawal attempt failed: {error_message}")
+        return JsonResponse({'success': False, 'error': error_message})
+
+    # If we reach here, the user is eligible for withdrawal
+    with transaction.atomic():
+        wallet, created = Wallet.objects.get_or_create(user=user)
+        wallet.balance += total_bonus
+        wallet.save()
+
+        # Reset user's bonus amount
+        user.bonus_amount = 0
+        user.save()
+
+        # Create a transaction record for the bonus withdrawal
+        Transaction.objects.create(
+            user=user,
+            service='Bonus Withdrawal',
+            invoice_id=f'BW{user.id}{int(timezone.now().timestamp())}',
+            amount=total_bonus,
+            transaction_type='credit',
+            date=timezone.now(),
+            status='completed'
+        )
+
+    logger.info(f"User {user.id} - Successfully withdrew ₦{total_bonus} bonus")
+    return JsonResponse({'success': True, 'message': f'Successfully withdrew ₦{total_bonus} bonus to your wallet.'})
+
 
 def send_notification(request):
     if request.method == 'POST':

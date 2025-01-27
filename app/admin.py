@@ -4,7 +4,8 @@ from .models import CustomUser, Transaction, Beneficiary, GiftCardImage, GiftCar
 from django.urls import path
 from .views import send_notification
 from django.db import models
-
+from django.db import transaction as db_transaction
+from django.contrib import messages
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -130,8 +131,31 @@ class TransactionAdmin(admin.ModelAdmin):
         return '-'
     get_request_details.short_description = 'Request Details'
 
+    @db_transaction.atomic
     def mark_as_completed(self, request, queryset):
-        queryset.update(status='completed')
+        completed_count = 0
+        for trans in queryset:
+            if trans.status != 'completed':
+                trans.status = 'completed'
+                trans.save()
+                completed_count += 1
+
+                if trans.service == 'giftcard':
+                    giftcard_trans = trans.giftcard_transaction
+                    if giftcard_trans:
+                        giftcard_trans.status = 'completed'
+                        giftcard_trans.save()
+
+                        # Update wallet balance for gift card transactions
+                        wallet, created = Wallet.objects.get_or_create(user=trans.user)
+                        wallet.balance += trans.amount
+                        wallet.save()
+
+        if completed_count:
+            messages.success(request, f"{completed_count} transaction(s) marked as completed.")
+        else:
+            messages.info(request, "No transactions were updated.")
+
     mark_as_completed.short_description = "Mark selected transactions as completed"
 
     def mark_as_cancelled(self, request, queryset):
@@ -161,6 +185,20 @@ class TransactionAdmin(admin.ModelAdmin):
     def service(self, obj):
         return obj.service_display
     service.admin_order_field = 'service_display'
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        
+        # Update associated GiftCardTransaction if it exists
+        if obj.service == 'giftcard':
+            try:
+                giftcard_trans = GiftCardTransaction.objects.get(transaction=obj)
+                if giftcard_trans.status != obj.status:
+                    giftcard_trans.status = obj.status
+                    giftcard_trans.save()
+                    messages.info(request, f"Gift Card Transaction status updated to {obj.status}.")
+            except GiftCardTransaction.DoesNotExist:
+                pass  # No associated GiftCardTransaction
 
 @admin.register(Beneficiary)
 class BeneficiaryAdmin(admin.ModelAdmin):

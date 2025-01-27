@@ -92,7 +92,13 @@
                 <div class="total-bonus">
                     <div class="total-bonus-heading">Total Bonus</div>
                 </div>
-                <div class="total-bonus-amount">₦{{ total_bonus|floatformat:2|intcomma }}</div>
+                <div class="total-bonus-amount mb-3">₦{{ total_bonus|floatformat:2|intcomma }}</div>
+                <button id="withdrawButton" class="btn btn-primary withdraw-to-wallet" {% if not user_eligible %} disabled {% endif %}>
+                    Withdraw
+                </button>
+                {% if not user_eligible %}
+                <small class="text-muted d-block mt-2">Complete a giftcard transaction of at least ₦100,000 to unlock withdrawal.</small>
+                {% endif %}
             </div>
 
             <h2 class="all-bonuses-heading mb-4">All Bonuses</h2>
@@ -171,4 +177,38 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const withdrawButton = document.getElementById('withdrawButton');
+    
+    withdrawButton.addEventListener('click', function() {
+        if (confirm('Are you sure you want to withdraw your total bonus to your wallet?')) {
+            fetch('{% url "withdraw_bonus" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Bonus successfully withdrawn to your wallet!');
+                    location.reload(); // Reload the page to reflect the new balance
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        }
+    });
+});
+</script>
 {% endblock %}
