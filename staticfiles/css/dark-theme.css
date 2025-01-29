@@ -1,0 +1,114 @@
+body.dark-theme {
+    background-color: #000;
+    color: #ffffff;
+}
+
+h2.dark-theme{
+    color: #ffffff;
+}
+
+
+.dark-theme .dashboard{
+    background-color: #000;
+}
+
+.dark-theme .wallet-balance-amount{
+    color: #ffffff;
+}
+
+.dark-theme .wallet-balance-amount{
+    color: #ffffff;
+}
+
+
+.dark-theme .card {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .content-card {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .card-title {
+    color: #ffffff;
+}
+
+.dark-theme .table {
+    color: #ffffff;
+}
+
+.dark-theme .table th{
+    background-color: #000;
+}
+
+.dark-theme .modal-content {
+    background-color: #000;
+    color: #ffffff;
+}
+
+.dark-theme .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.dark-theme .btn-outline-primary {
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.dark-theme .btn-outline-primary:hover {
+    background-color: #FEA116;
+    color: #000;
+}
+
+.dark-theme .form-control {
+    background-color: #000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.dark-theme .form-select {
+    background-color: #000;
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+
+/* Styles for services.html */
+
+.dark-theme .text-center h2 {
+    color: #ffffff;
+}
+
+.dark-theme .container h2 {
+    color: #ffffff;
+}
+
+.dark-theme .service-item {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .service-item h4 {
+    color: #ffffff;
+}
+
+.dark-theme .service-item i.fa {
+    color: #ffffff;
+}
+
+.dark-theme a.text-decoration-none:hover .service-item {
+    background-color: #111;
+}
+
+.dark-theme .custom-modal{
+    border-color: #ffffff;
+}
+
+.dark-theme .custom-modal h5{
+    color: #ffffff;
+}
+.dark-theme .modal-title{
+    color: #ffffff;
+}

@@ -119,9 +119,7 @@ body {
     flex-direction: column;
     min-height: 100vh;
 }
-.content-wrapper {
-    flex: 1 0 auto;
-}
+
 .footer {
     flex-shrink: 0;
     background-color: #0F172B;
