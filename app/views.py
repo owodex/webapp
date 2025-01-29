@@ -9,7 +9,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
@@ -21,8 +21,24 @@ import json
 import logging
 from django.db.models import Q, Sum
 from django.http import HttpResponseBadRequest
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
 
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'password_reset/password_reset_form.html'
+    email_template_name = 'password_reset/password_reset_email.html'
+    success_url = reverse_lazy('password_reset_done')
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'password_reset/password_reset_done.html'
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'password_reset/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'password_reset/password_reset_complete.html'
+    
 @login_required
 def user_settings(request):
     if request.method == 'POST':

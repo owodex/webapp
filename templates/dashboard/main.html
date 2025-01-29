@@ -35,13 +35,13 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 
     {% block extra_css %}
     {% endblock %}
     
 </head>
 <body>
-    <div class="content-wrapper">
         <!-- Spinner Start -->
         <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
@@ -81,11 +81,12 @@
                 </div>
             </div>
         </nav>
+        
 
         <!-- Mobile Search Modal -->
         <div class="modal fade" id="mobileSearchModal" tabindex="-1" aria-labelledby="mobileSearchModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+                <div class="modal-content custom-modal">
                     <div class="modal-header">
                         <h5 class="modal-title" id="mobileSearchModalLabel">Search</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -101,23 +102,29 @@
                 </div>
             </div>
         </div>
+        <div id="theme-toggle-container">
+            <button id="themeToggle" class="btn btn-outline-primary">
+                <i class="fas fa-sun"></i>
+            </button>
+        </div>
 
         {% block maincontent %}
+            
         {% endblock %}
 
-    </div>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2025 Owodex. All rights reserved.</p>
+            </div>
+        </footer>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 Owodex. All rights reserved.</p>
-        </div>
-    </footer>
+    
 
     <!-- Profile Modal -->
     <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content custom-modal">
             <div class="modal-body">
             <div class="d-flex align-items-center mb-3">
                 <div class="profile-initial me-3">
@@ -140,7 +147,7 @@
   <!-- Delete Account Modal -->
   <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+      <div class="modal-content custom-modal">
         <div class="modal-header">
           <h5 class="modal-title" id="deleteAccountModalLabel">Delete Account</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -167,7 +174,7 @@
  <!-- Notifications Modal -->
 <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+      <div class="modal-content custom-modal">
           <div class="modal-header">
               <h5 class="modal-title" id="notificationsModalLabel">Recent Notifications</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -352,6 +359,43 @@
             redirectToService(searchTerm);
         });
     });
+    </script>
+    <!-- Theme Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            const icon = themeToggle.querySelector('i');
+
+            // Check if there's a saved theme preference
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                body.classList.add(currentTheme);
+                updateIcon(currentTheme === 'dark-theme');
+            }
+
+            themeToggle.addEventListener('click', function() {
+                if (body.classList.contains('dark-theme')) {
+                    body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light-theme');
+                    updateIcon(false);
+                } else {
+                    body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark-theme');
+                    updateIcon(true);
+                }
+            });
+
+            function updateIcon(isDark) {
+                if (isDark) {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                } else {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+        });
     </script>
 </body>
 </html>
