@@ -35,6 +35,7 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 
     {% block extra_css%}
     {% endblock %}
@@ -42,7 +43,7 @@
 </head>
 
 <body>
-    <div class="bg-white p-0">
+    <div class="body-bgg p-0">
         <!-- Spinner Start -->
         <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
@@ -78,6 +79,11 @@
                     </div>
                 </div>
             </nav>
+            <div id="theme-toggle-container">
+                <button id="themeToggle" class="btn btn-outline-primary">
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
         {% block maincontent%}
         {% endblock%}
 
@@ -147,6 +153,44 @@
 
 <!-- Template Javascript -->
 <script src="{% static 'js/main.js' %}"></script>
+
+<!-- Theme Toggle Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+
+        // Check if there's a saved theme preference
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme) {
+            body.classList.add(currentTheme);
+            updateIcon(currentTheme === 'dark-theme');
+        }
+
+        themeToggle.addEventListener('click', function() {
+            if (body.classList.contains('dark-theme')) {
+                body.classList.remove('dark-theme');
+                localStorage.setItem('theme', 'light-theme');
+                updateIcon(false);
+            } else {
+                body.classList.add('dark-theme');
+                localStorage.setItem('theme', 'dark-theme');
+                updateIcon(true);
+            }
+        });
+
+        function updateIcon(isDark) {
+            if (isDark) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+    });
+</script>
 
 </body>
 

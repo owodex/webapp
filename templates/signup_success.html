@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block maincontent %}
+    <div class="container container pt-5 d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+        <div class="card w-100 custom-card">
+            <div class="card-body p-5">
+                <h2 class="card-title text-center mb-4">Sign Up Successful!</h2>
+                <p class="text-center">Thank you for signing up with Owodex. We've sent a verification email to <strong>{{ email }}</strong>.</p>
+                <p class="card-text">Please check your inbox and click on the verification link to activate your account.</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

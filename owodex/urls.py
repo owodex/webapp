@@ -34,6 +34,7 @@ urlpatterns = [
     path('dashboard/', dashboard, name ='dashboard'),
     path('services/', services, name ='services'),
     path('transactions/', transactions, name ='transactions'),
+    path('verify-email/<str:uidb64>/<str:token>/', verify_email, name='verify_email'),
     path('profile/', profile, name ='profile'),
     path('settings/', user_settings, name ='settings'),
     path('logout/', user_logout, name ='logout'),

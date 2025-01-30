@@ -34,6 +34,7 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.css">
 </head>
 <body>
@@ -52,6 +53,11 @@
                             <a href="/" class="navbar-brand p-0 d-inline-block">
                                 <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo" style="width: 60%;" class="img-fluid">
                             </a>
+                        </div>
+                        <div id="theme-toggle-container">
+                            <button id="themeToggle" class="btn btn-outline-primary">
+                                <i class="fas fa-sun"></i>
+                            </button>
                         </div>
                         <h2 class="card-title text-center mb-4">Welcome to Owodex</h2>
                         <form method = "post" id="signupForm">
@@ -133,6 +139,57 @@
             document.querySelector("#phone").value = fullNumber;
         });
      </script>
-     
+     <!-- Theme Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            const icon = themeToggle.querySelector('i');
+
+            // Check if there's a saved theme preference
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                body.classList.add(currentTheme);
+                updateIcon(currentTheme === 'dark-theme');
+            }
+
+            themeToggle.addEventListener('click', function() {
+                if (body.classList.contains('dark-theme')) {
+                    body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light-theme');
+                    updateIcon(false);
+                } else {
+                    body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark-theme');
+                    updateIcon(true);
+                }
+            });
+
+            function updateIcon(isDark) {
+                if (isDark) {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                } else {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+        });
+    </script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneInput = document.getElementById('phone');
+            const form = document.getElementById('signupForm');
+    
+            form.addEventListener('submit', function(event) {
+                const phoneNumber = phoneInput.value.replace(/\D/g, ''); // Remove non-digit characters
+                if (phoneNumber.length < 10 || phoneNumber.length > 15) {
+                    event.preventDefault();
+                    alert('Please enter a valid phone number (10-15 digits).');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

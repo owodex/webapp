@@ -16,18 +16,54 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from decimal import Decimal, InvalidOperation
 from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.forms import PasswordResetForm
 import uuid
 import json
 import logging
 from django.db.models import Q, Sum
 from django.http import HttpResponseBadRequest
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = CustomUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, 'Your email has been verified. You can now log in.')
+        return redirect('login')
+    else:
+        messages.error(request, 'The verification link is invalid or has expired.')
+        return redirect('signup')
 
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'password_reset/password_reset_form.html'
     email_template_name = 'password_reset/password_reset_email.html'
     success_url = reverse_lazy('password_reset_done')
+    form_class = PasswordResetForm
+
+    def form_valid(self, form):
+        email = form.cleaned_data["email"]
+        # Check if a user exists with this email
+        if not CustomUser.objects.filter(email=email).exists():
+            form.add_error('email', ValidationError("No account found with this email address."))
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'password_reset/password_reset_done.html'
@@ -38,7 +74,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'password_reset/password_reset_complete.html'
-    
+
 @login_required
 def user_settings(request):
     if request.method == 'POST':
@@ -102,6 +138,16 @@ def signup(request):
         confirm_password = request.POST.get('confirm_password')
         referral_code = request.POST.get('referral_code')
 
+        # Phone number validation
+        phone_regex = RegexValidator(
+            regex=r'^\+?1?\d{10,15}$',
+            message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+        )
+        try:
+            phone_regex(phone_number)
+        except ValidationError:
+            return render(request, 'signup.html', {'error': 'Invalid phone number format. Please enter a valid phone number.'})
+
         if password == confirm_password:
             with transaction.atomic():
                 # Check if referral code is valid
@@ -120,7 +166,8 @@ def signup(request):
                     last_name=' '.join(full_name.split()[1:]),
                     phone_number=phone_number,
                     referred_by=referrer,
-                    bonus_amount=2000  # Sign up bonus
+                    bonus_amount=2000,  # Sign up bonus
+                    is_active=False  # Set user as inactive until email is verified
                 )
 
                 # Create the signup bonus transaction
@@ -150,9 +197,20 @@ def signup(request):
                         status='completed'
                     )
 
-            # Log the user in
-            login(request, user)
-            return redirect('dashboard')  # Redirect to dashboard after successful signup
+                # Generate email verification token
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                verification_link = request.build_absolute_uri(f'/verify-email/{uid}/{token}/')
+
+                # Send verification email
+                subject = 'Verify your email address'
+                message = render_to_string('verification_email.html', {
+                    'user': user,
+                    'verification_link': verification_link,
+                })
+                send_mail(subject, message, 'support@owodex.com', [user.email])
+
+                return render(request, 'signup_success.html', {'email': user.email})
         else:
             # Handle password mismatch error
             return render(request, 'signup.html', {'error': 'Passwords do not match'})

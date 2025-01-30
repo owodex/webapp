@@ -8,6 +8,7 @@ h2.dark-theme{
 }
 
 
+
 .dark-theme .dashboard{
     background-color: #000;
 }
@@ -22,6 +23,16 @@ h2.dark-theme{
 
 
 .dark-theme .card {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .custom-card {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .rate-calculator-card {
     background-color: #000;
     border-color: #ffffff;
 }
@@ -98,6 +109,12 @@ h2.dark-theme{
     color: #ffffff;
 }
 
+.dark-theme .wallet-balance-amount .fa-eye-slash,
+.dark-theme .wallet-balance-amount .fa-eye {
+    color: #fff; /* White color for the eye icon in dark mode */
+}
+
+
 .dark-theme a.text-decoration-none:hover .service-item {
     background-color: #111;
 }
@@ -110,5 +127,33 @@ h2.dark-theme{
     color: #ffffff;
 }
 .dark-theme .modal-title{
+    color: #ffffff;
+}
+
+.dark-theme .container h5{
+    color: #ffffff;
+}
+
+.dark-theme .container h4{
+    color: #ffffff;
+}
+
+.dark-theme .terms li{
+    color: #ffffff;
+}
+
+.dark-theme .privacy li{
+    color: #ffffff;
+}
+
+.dark-theme .container h6{
+    color: #ffffff;
+}
+
+.dark-theme .container h3{
+    color: #ffffff;
+}
+
+.dark-theme .container p{
     color: #ffffff;
 }

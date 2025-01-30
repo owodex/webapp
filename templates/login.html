@@ -31,6 +31,7 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 </head>
 <body>
     <div class="container">
@@ -40,6 +41,7 @@
                 <!-- You can replace this with your own image -->
                 <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_1.png" alt="Login" class="img-fluid h-100 object-fit-cover">
             </div>
+            
             <!-- Right column for form -->
             <div class="col-lg-6 d-flex align-items-center justify-content-center">
                 <div class="card w-100 custom-card">
@@ -48,6 +50,11 @@
                             <a href="/" class="navbar-brand p-0 d-inline-block">
                                 <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo" style="width: 60%;" class="img-fluid">
                             </a>
+                        </div>
+                        <div id="theme-toggle-container">
+                            <button id="themeToggle" class="btn btn-outline-primary">
+                                <i class="fas fa-sun"></i>
+                            </button>
                         </div>
                         <h2 class="card-title text-center mb-4">Welcome back to Owodex</h2>
                         {% if messages %}
@@ -101,5 +108,43 @@
     </script>
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Theme Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            const icon = themeToggle.querySelector('i');
+
+            // Check if there's a saved theme preference
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                body.classList.add(currentTheme);
+                updateIcon(currentTheme === 'dark-theme');
+            }
+
+            themeToggle.addEventListener('click', function() {
+                if (body.classList.contains('dark-theme')) {
+                    body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light-theme');
+                    updateIcon(false);
+                } else {
+                    body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark-theme');
+                    updateIcon(true);
+                }
+            });
+
+            function updateIcon(isDark) {
+                if (isDark) {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                } else {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                }
+            }
+        });
+    </script>
 </body>
 </html>
