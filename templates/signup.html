@@ -38,6 +38,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.css">
 </head>
 <body>
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <button id="themeToggle" class="btn btn-link text-decoration-none d-none d-lg-block">
+            <i class="fas fa-sun"></i>
+        </button>
+    </div>
     <div class="container">
         <div class="row mt-5">
             <!-- Left column for photo -->
@@ -53,11 +58,6 @@
                             <a href="/" class="navbar-brand p-0 d-inline-block">
                                 <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo" style="width: 60%;" class="img-fluid">
                             </a>
-                        </div>
-                        <div id="theme-toggle-container">
-                            <button id="themeToggle" class="btn btn-outline-primary">
-                                <i class="fas fa-sun"></i>
-                            </button>
                         </div>
                         <h2 class="card-title text-center mb-4">Welcome to Owodex</h2>
                         <form method = "post" id="signupForm">

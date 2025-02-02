@@ -34,6 +34,7 @@ urlpatterns = [
     path('dashboard/', dashboard, name ='dashboard'),
     path('services/', services, name ='services'),
     path('transactions/', transactions, name ='transactions'),
+    path('api/vtpass/service-variations', vtpass_service_variations, name='vtpass_service_variations'),
     path('verify-email/<str:uidb64>/<str:token>/', verify_email, name='verify_email'),
     path('profile/', profile, name ='profile'),
     path('settings/', user_settings, name ='settings'),

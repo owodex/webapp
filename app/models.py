@@ -116,12 +116,12 @@ class AirtimeRequest(models.Model):
     )
 
     transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='airtime_request')
-    phone_number = PhoneNumberField()
+    phone = PhoneNumberField()
     network = models.CharField(max_length=10, choices=NETWORK_CHOICES)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
     def __str__(self):
-        return f"Airtime Request for {self.phone_number} ({self.network})"
+        return f"Airtime Request for {self.phone} ({self.network})"
 
     def save(self, *args, **kwargs):
         if not self.amount:
@@ -144,13 +144,13 @@ class DataRequest(models.Model):
     )
 
     transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='data_request')
-    phone_number = PhoneNumberField()
+    phone = PhoneNumberField()
     network = models.CharField(max_length=10, choices=NETWORK_CHOICES)
     data_plan = models.CharField(max_length=10, choices=DATA_PLAN_CHOICES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"Data Request for {self.phone_number} ({self.network}) - {self.data_plan}"
+        return f"Data Request for {self.phone} ({self.network}) - {self.data_plan}"
 
     def save(self, *args, **kwargs):
         if not self.amount:

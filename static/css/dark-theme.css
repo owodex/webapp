@@ -32,6 +32,30 @@ h2.dark-theme{
     border-color: #ffffff;
 }
 
+.dark-theme .bonus-card {
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+.dark-theme .total-bonus-amount{
+    color: #ffffff;
+}
+
+.dark-theme .total-bonus-heading{
+    color: #000;
+}
+
+.dark-theme .referral-code{
+    color: #000;
+}
+
+
+.dark-theme .bonus-card small{
+    background-color: #000;
+    border-color: #ffffff;
+}
+
+
 .dark-theme .rate-calculator-card {
     background-color: #000;
     border-color: #ffffff;

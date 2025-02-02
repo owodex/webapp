@@ -74,16 +74,15 @@
                             <a href="{% url 'dashboard' %}" class="btn btn-primary py-2 px-4">Dashboard</a>
                         {% else %}
                             <a href="{% url 'login' %}" class="btn btn-outline-light py-2 px-4 me-3">Log In</a>
-                            <a href="{% url 'signup' %}" class="btn btn-primary py-2 px-4">Sign Up</a>
+                            <a href="{% url 'signup' %}" class="btn btn-primary py-2 px-4 me-lg-3">Sign Up</a>
                         {% endif %}
+                        <button id="themeToggle" class="bg-transparent border-0 text-light">
+                            <i class="fas fa-sun"></i>
+                        </button>
                     </div>
                 </div>
             </nav>
-            <div id="theme-toggle-container">
-                <button id="themeToggle" class="btn btn-outline-primary">
-                    <i class="fas fa-sun"></i>
-                </button>
-            </div>
+            
         {% block maincontent%}
         {% endblock%}
 

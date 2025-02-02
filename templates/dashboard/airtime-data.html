@@ -59,7 +59,7 @@
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="airtimeNumber" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control form-control-lg" id="airtimeNumber" name="phone_number" placeholder="Enter phone number" required>
+                        <input type="tel" class="form-control form-control-lg" id="airtimeNumber" name="phone" placeholder="Enter phone number" required>
                     </div>
                     <div class="mb-4">
                         <label for="airtimeNetwork" class="form-label">Select Network</label>
@@ -89,7 +89,7 @@
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="dataNumber" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control form-control-lg" id="dataNumber" name="phone_number" placeholder="Enter phone number" required>
+                        <input type="tel" class="form-control form-control-lg" id="dataNumber" name="phone" placeholder="Enter phone number" required>
                     </div>
                     <div class="mb-4">
                         <label for="dataNetwork" class="form-label">Select Network</label>
@@ -98,17 +98,14 @@
                             <option value="mtn">MTN</option>
                             <option value="airtel">Airtel</option>
                             <option value="glo">Glo</option>
-                            <option value="9mobile">9mobile</option>
+                            <option value="etisalat">9mobile</option>
                         </select>
                     </div>
                     <div class="mb-4">
                         <label for="dataPlan" class="form-label">Select Data Plan</label>
                         <select class="form-select form-select-lg" id="dataPlan" name="data_plan" required>
                             <option value="">Choose data plan</option>
-                            <option value="1gb">1GB</option>
-                            <option value="2gb">2GB</option>
-                            <option value="5gb">5GB</option>
-                            <option value="10gb">10GB</option>
+                            <!-- Data plan options will be populated dynamically -->
                         </select>
                     </div>
                     <div class="mb-4">
@@ -130,79 +127,121 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const airtimeBtn = document.getElementById('airtimeBtn');
-        const dataBtn = document.getElementById('dataBtn');
-        const airtimeSection = document.getElementById('airtimeSection');
-        const dataSection = document.getElementById('dataSection');
+document.addEventListener('DOMContentLoaded', function() {
+    const airtimeBtn = document.getElementById('airtimeBtn');
+    const dataBtn = document.getElementById('dataBtn');
+    const airtimeSection = document.getElementById('airtimeSection');
+    const dataSection = document.getElementById('dataSection');
+    const dataNetwork = document.getElementById('dataNetwork');
+    const dataPlan = document.getElementById('dataPlan');
+    const dataAmount = document.getElementById('dataAmount');
 
-        airtimeBtn.addEventListener('click', function() {
-            airtimeSection.style.display = 'block';
-            dataSection.style.display = 'none';
-            airtimeBtn.classList.replace('btn-secondary', 'btn-primary');
-            dataBtn.classList.replace('btn-primary', 'btn-secondary');
-        });
+    // Toggle between airtime and data sections
+    airtimeBtn.addEventListener('click', function() {
+        airtimeSection.style.display = 'block';
+        dataSection.style.display = 'none';
+        airtimeBtn.classList.replace('btn-secondary', 'btn-primary');
+        dataBtn.classList.replace('btn-primary', 'btn-secondary');
+    });
 
-        dataBtn.addEventListener('click', function() {
-            airtimeSection.style.display = 'none';
-            dataSection.style.display = 'block';
-            dataBtn.classList.replace('btn-secondary', 'btn-primary');
-            airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
-        });
+    dataBtn.addEventListener('click', function() {
+        airtimeSection.style.display = 'none';
+        dataSection.style.display = 'block';
+        dataBtn.classList.replace('btn-secondary', 'btn-primary');
+        airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
+    });
 
-        const airtimeForm = document.getElementById('airtimeForm');
-        airtimeForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
+    // Populate data plans when network is selected
+    dataNetwork.addEventListener('change', function() {
+        const selectedNetwork = this.value;
+        dataPlan.innerHTML = '<option value="">Choose data plan</option>';
+        dataAmount.value = '';
 
-            fetch('{% url "submit_airtime_request" %}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Airtime request submitted successfully. Transaction ID: ' + data.transaction_id);
-                    airtimeForm.reset();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            });
-        });
+        if (selectedNetwork) {
+            // Use the VTPass API to fetch data plans
+            fetch(`/api/vtpass/service-variations?serviceID=${selectedNetwork}-data`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.content && data.content.variations) {
+                        data.content.variations.forEach(plan => {
+                            const option = document.createElement('option');
+                            option.value = plan.variation_code;
+                            option.textContent = `${plan.name} - ₦${plan.variation_amount}`;
+                            option.dataset.price = plan.variation_amount;
+                            dataPlan.appendChild(option);
+                        });
+                    } else {
+                        console.error('Unexpected API response structure:', data);
+                    }
+                })
+                .catch(error => console.error('Error fetching data plans:', error));
+        }
+    });
 
-        const dataForm = document.getElementById('dataForm');
-        dataForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
+    // Update amount when data plan is selected
+    dataPlan.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.dataset.price) {
+            dataAmount.value = selectedOption.dataset.price;
+        } else {
+            dataAmount.value = '';
+        }
+    });
 
-            fetch('{% url "submit_data_request" %}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Data request submitted successfully. Transaction ID: ' + data.transaction_id);
-                    dataForm.reset();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            });
+    // Handle form submissions
+    const airtimeForm = document.getElementById('airtimeForm');
+    airtimeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('{% url "submit_airtime_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Airtime request submitted successfully. Transaction ID: ' + data.transaction_id);
+                airtimeForm.reset();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
         });
     });
+
+    const dataForm = document.getElementById('dataForm');
+    dataForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('{% url "submit_data_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Data request submitted successfully. Transaction ID: ' + data.transaction_id);
+                dataForm.reset();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    });
+});
 </script>
 {% endblock %}

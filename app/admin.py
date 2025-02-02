@@ -61,15 +61,15 @@ class AirtimeRequestInline(admin.StackedInline):
     model = AirtimeRequest
     can_delete = False
     verbose_name_plural = 'Airtime Request'
-    fields = ('phone_number', 'network', 'amount')
-    readonly_fields = ('phone_number', 'network', 'amount')
+    fields = ('phone', 'network', 'amount')
+    readonly_fields = ('phone', 'network', 'amount')
 
 class DataRequestInline(admin.StackedInline):
     model = DataRequest
     can_delete = False
     verbose_name_plural = 'Data Request'
-    fields = ('phone_number', 'network', 'data_plan', 'amount')
-    readonly_fields = ('phone_number', 'network', 'data_plan', 'amount')
+    fields = ('phone', 'network', 'data_plan', 'amount')
+    readonly_fields = ('phone', 'network', 'data_plan', 'amount')
 
 class ElectricityRequestInline(admin.StackedInline):
     model = ElectricityRequest
@@ -97,19 +97,19 @@ class GiftCardImageInline(admin.TabularInline):
     extra = 1
 
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ('invoice_id', 'user', 'service', 'amount', 'status', 'date', 'get_phone_number', 'get_request_details')
+    list_display = ('invoice_id', 'user', 'service', 'amount', 'status', 'date', 'get_phone', 'get_request_details')
     list_filter = ('status', 'service', 'transaction_type')
     search_fields = ('invoice_id', 'user__email', 'user__username')
     actions = ['mark_as_completed', 'mark_as_cancelled']
     inlines = [AirtimeRequestInline, DataRequestInline, ElectricityRequestInline, CableRequestInline, GiftCardTransactionInline]
 
-    def get_phone_number(self, obj):
+    def get_phone(self, obj):
         if obj.service in ['airtime', 'data']:
             request = getattr(obj, f'{obj.service}_request', None)
             if request:
-                return str(request.phone_number)
+                return str(request.phone)
         return '-'
-    get_phone_number.short_description = 'Phone Number'
+    get_phone.short_description = 'Phone Number'
 
     def get_request_details(self, obj):
         if obj.service == 'airtime':
