@@ -74,18 +74,23 @@
                         <label for="cablePackage" class="form-label">Select Package</label>
                         <select class="form-select form-select-lg" id="cablePackage" name="package">
                             <option selected>Choose package</option>
-                            <option value="basic">Basic</option>
-                            <option value="standard">Standard</option>
-                            <option value="premium">Premium</option>
+                            <!-- Options will be populated dynamically -->
                         </select>
                     </div>
                     <div class="mb-4">
                         <label for="cableAccountName" class="form-label">Account Name</label>
-                        <input type="text" class="form-control form-control-lg" id="cableAccountName" name="account_name" placeholder="Enter account name">
+                        <input type="text" class="form-control form-control-lg" id="cableAccountName" name="account_name" readonly>
                     </div>
                     <div class="mb-4">
                         <label for="amount" class="form-label">Amount</label>
-                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" placeholder="Enter amount" required>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subscriptionType" class="form-label">Subscription Type</label>
+                        <select class="form-select" id="subscriptionType" name="subscription_type" required>
+                            <option value="change">Change Package</option>
+                            <option value="renew">Renew Current Package</option>
+                        </select>
                     </div>
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary btn-lg">Pay</button>
@@ -145,7 +150,24 @@
         const electricityBtn = document.getElementById('electricityBtn');
         const cableSection = document.getElementById('cableSection');
         const electricitySection = document.getElementById('electricitySection');
-    
+        const cableProvider = document.getElementById('cableProvider');
+        const smartCardNumber = document.getElementById('smartCardNumber');
+        const cablePackage = document.getElementById('cablePackage');
+        const cableAccountName = document.getElementById('cableAccountName');
+        const amount = document.getElementById('amount');
+        const subscriptionType = document.getElementById('subscriptionType');
+
+        // Update form behavior based on subscription type
+        subscriptionType.addEventListener('change', function() {
+            if (this.value === 'renew') {
+                cablePackage.disabled = true;
+                cablePackage.value = '';
+            } else {
+                cablePackage.disabled = false;
+            }
+        });
+
+        // Toggle between Cable and Electricity sections
         cableBtn.addEventListener('click', function() {
             cableSection.style.display = 'block';
             electricitySection.style.display = 'none';
@@ -159,7 +181,84 @@
             electricityBtn.classList.replace('btn-secondary', 'btn-primary');
             cableBtn.classList.replace('btn-primary', 'btn-secondary');
         });
-    
+
+        // Fetch variation codes when provider changes
+        cableProvider.addEventListener('change', function() {
+            const provider = this.value;
+            const url = `https://sandbox.vtpass.com/api/service-variations?serviceID=${provider}`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Basic ' + btoa('YourVtpassEmail:YourPassword'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                cablePackage.innerHTML = '<option selected>Choose package</option>';
+                if (data.content && data.content.varations) {
+                    data.content.varations.forEach(package => {
+                        cablePackage.innerHTML += `<option value="${package.variation_code}">${package.name} - ₦${package.variation_amount}</option>`;
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Validate smart card number
+        smartCardNumber.addEventListener('blur', function() {
+            const provider = cableProvider.value;
+            const cardNumber = this.value;
+        
+            if (!provider || !cardNumber) {
+                alert('Please select a provider and enter a smart card number');
+                return;
+            }
+        
+            fetch('/validate-smart-card/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    provider: provider,
+                    smart_card_number: cardNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    cableAccountName.value = data.customer_name;
+                    
+                    if (data.current_bouquet) {
+                        cablePackage.value = data.current_bouquet;
+                    }
+        
+                    if (data.renewal_amount) {
+                        amount.value = data.renewal_amount;
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                    this.value = '';
+                    cableAccountName.value = '';
+                    cablePackage.value = '';
+                    amount.value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while verifying the smart card number. Please try again.');
+            });
+        });
+
+        // Update amount when package changes
+        cablePackage.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            amount.value = selectedOption.textContent.split('₦')[1];
+        });
+
         // Cable form submission
         const cableForm = document.getElementById('cableForm');
         cableForm.addEventListener('submit', function(e) {

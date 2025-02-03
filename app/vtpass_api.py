@@ -2,6 +2,7 @@ import requests
 from django.conf import settings
 from datetime import datetime
 import pytz
+import base64
 import uuid
 import logging
 
@@ -43,8 +44,10 @@ class VTPassAPI:
             logger.error(f"Request failed: {e}")
             return {"error": str(e)}
 
-    def get_data_variation_codes(self):
-        return self.make_request('GET', 'service-variations?serviceID=mtn-data')
+    def get_data_variation_codes(self, network):
+        serviceID = f"{network}-data"
+        endpoint = f"service-variations?serviceID={serviceID}"
+        return self.make_request('GET', endpoint)
 
     def buy_data(self, phone, network, variation_code):
         payload = {
@@ -64,6 +67,87 @@ class VTPassAPI:
             "phone": phone
         }
         return self.make_request('POST', 'pay', payload)
+    
+    def verify_smartcard(self, billersCode, serviceID):
+        payload = {
+            "billersCode": billersCode,
+            "serviceID": serviceID,
+        }
+        logger.debug(f"Verifying smart card: {payload}")
+        response = self.make_request('POST', 'merchant-verify', payload)
+        logger.debug(f"Smart card verification response: {response}")
+        return response
 
     def query_transaction_status(self, request_id):
         return self.make_request('GET', f'requery?request_id={request_id}')
+
+class VTPassCableAPI:
+    def __init__(self):
+        self.base_url = "https://sandbox.vtpass.com/api"
+        self.username = settings.VTPASS_EMAIL
+        self.password = settings.VTPASS_PASSWORD
+        self.auth_header = self._get_auth_header()
+
+    def _get_auth_header(self):
+        credentials = f"{self.username}:{self.password}"
+        encoded_credentials = base64.b64encode(credentials.encode()).decode()
+        return {"Authorization": f"Basic {encoded_credentials}"}
+    
+    def make_request(self, method, endpoint, payload=None):
+        url = f"{self.base_url}/{endpoint}"
+        headers = {**self.auth_header, "Content-Type": "application/json"}
+        
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers, params=payload)
+            elif method == 'POST':
+                response = requests.post(url, headers=headers, json=payload)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
+            
+            response.raise_for_status()
+            logger.debug(f"Raw API response: {response.text}")
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {e}")
+            return {"error": str(e)}
+
+    def get_variation_codes(self, service_id):
+        url = f"{self.base_url}/service-variations"
+        params = {"serviceID": service_id}
+        response = requests.get(url, headers=self.auth_header, params=params)
+        return response.json()
+
+    def verify_smartcard(self, billers_code, service_id):
+        url = f"{self.base_url}/merchant-verify"
+        data = {
+            "billersCode": billers_code,
+            "serviceID": service_id
+        }
+        response = requests.post(url, headers=self.auth_header, json=data)
+        return response.json()
+
+    def purchase_product(self, request_id, service_id, billers_code, variation_code, amount, phone, subscription_type):
+        endpoint = 'pay'
+        payload = {
+            'request_id': request_id,
+            'serviceID': service_id,
+            'billersCode': billers_code,
+            'variation_code': variation_code,
+            'amount': amount,
+            'phone': phone,
+            'subscription_type': subscription_type,
+        }
+        return self.make_request('POST', endpoint, payload)
+
+    def renew_bouquet(self, request_id, service_id, billers_code, amount, phone):
+        endpoint = 'pay'
+        payload = {
+            'request_id': request_id,
+            'serviceID': service_id,
+            'billersCode': billers_code,
+            'amount': amount,
+            'phone': phone,
+            'subscription_type': 'renew',
+        }
+        return self.make_request('POST', endpoint, payload)

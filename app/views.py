@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from decimal import Decimal, InvalidOperation
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from django.contrib.auth.forms import PasswordResetForm
@@ -35,7 +35,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from .vtpass_api import VTPassAPI
+from .vtpass_api import VTPassAPI, VTPassCableAPI
 from django.db import IntegrityError
 
 def verify_email(request, uidb64, token):
@@ -718,21 +718,36 @@ def submit_data_request(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
         network = request.POST.get('network')
-        data_plan = request.POST.get('data_plan')  # Assuming 'data_plan' now contains the variation_code
+        data_plan = request.POST.get('data_plan')
         amount = request.POST.get('amount')
+
+        logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}, amount={amount}")
 
         # Initialize VTPass API
         vtpass_api = VTPassAPI()
 
         # Get variation details
-        variations = vtpass_api.get_data_variation_codes(network)
-        selected_variation = next((v for v in variations.get('content', {}).get('variations', []) if v['name'] == data_plan), None)
+        variations_response = vtpass_api.get_data_variation_codes(network)
+        variations = variations_response.get('content', {}).get('variations', [])
+        
+        logger.debug(f"Received variations from VTPass API: {variations}")
+
+        # Find the exact matching variation
+        selected_variation = next((v for v in variations if v['variation_code'] == data_plan), None)
 
         if not selected_variation:
+            available_plans = ", ".join([f"{v['name']} ({v['variation_code']})" for v in variations])
+            logger.error(f"No matching plan found. Available plans: {available_plans}")
             return JsonResponse({
                 'status': 'error',
-                'message': 'Invalid variation code'
+                'message': f'Invalid data plan. Available plans are: {available_plans}',
+                'debug_info': {
+                    'received_plan': data_plan,
+                    'available_plans': [v['variation_code'] for v in variations]
+                }
             }, status=400)
+
+        logger.debug(f"Selected variation: {selected_variation}")
 
         variation_code = selected_variation['variation_code']
         amount = Decimal(selected_variation['variation_amount'])
@@ -746,10 +761,6 @@ def submit_data_request(request):
                 'status': 'error',
                 'message': 'Insufficient balance'
             }, status=400)
-
-        # Deduct amount from wallet
-        wallet.balance -= amount
-        wallet.save()
 
         # Generate a unique invoice ID
         invoice_id = str(uuid.uuid4().hex)[:20]
@@ -765,20 +776,24 @@ def submit_data_request(request):
         )
 
         # Make API call to VTPass
-        api_response = vtpass_api.buy_data(phone, variation_code)
+        api_response = vtpass_api.buy_data(phone, network, variation_code)
 
         if api_response.get('code') == '000':
             # Successful transaction
             new_transaction.status = 'completed'
             new_transaction.save()
 
+            # Deduct amount from wallet
+            wallet.balance -= amount
+            wallet.save()
+
             # Create a new data request
             DataRequest.objects.create(
                 transaction=new_transaction,
                 phone=phone,
-                network = network,
+                network=network,
                 data_plan=selected_variation['name'],
-                amount = amount,
+                amount=amount,
             )
 
             return JsonResponse({
@@ -792,10 +807,6 @@ def submit_data_request(request):
             new_transaction.status = 'failed'
             new_transaction.save()
 
-            # Refund the user
-            wallet.balance += amount
-            wallet.save()
-
             return JsonResponse({
                 'status': 'error',
                 'message': 'Data purchase failed: ' + api_response.get('response_description', 'Unknown error'),
@@ -807,6 +818,14 @@ def submit_data_request(request):
         'message': 'Invalid request method'
     }, status=400)
     
+from django.core.serializers.json import DjangoJSONEncoder
+from phonenumber_field.phonenumber import PhoneNumber
+
+class PhoneNumberEncoder(DjangoJSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, PhoneNumber):
+            return str(obj)
+        return super().default(obj)
 
 @require_POST
 @csrf_protect
@@ -816,8 +835,9 @@ def submit_cable_request(request):
     package = request.POST.get('package')
     account_name = request.POST.get('account_name')
     amount = request.POST.get('amount')
+    subscription_type = request.POST.get('subscription_type', 'change')  # Default to 'change' if not provided
 
-     # Generate a unique invoice ID
+    # Generate a unique invoice ID
     invoice_id = str(uuid.uuid4().hex)[:20]
 
     if not all([provider, smart_card_number, package, account_name, amount]):
@@ -833,30 +853,75 @@ def submit_cable_request(request):
     if wallet.balance < amount:
         return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
 
-    with transaction.atomic():
-        wallet.balance -= amount
-        wallet.save()
+    vtpass_api = VTPassCableAPI()
 
-        new_transaction = Transaction.objects.create(
-            user=request.user,
-            wallet=wallet,
-            amount=amount,
-            transaction_type='debit',
-            service='cable',
-            invoice_id=invoice_id,
-            status='pending'
+    # Prepare the payload for VTPass API
+    if subscription_type == 'renew':
+        response = vtpass_api.renew_bouquet(
+            request_id=invoice_id,
+            service_id=f"{provider}",
+            billers_code=smart_card_number,
+            amount=str(amount),
+            phone=str(request.user.phone_number)
+        )
+    else:
+        response = vtpass_api.purchase_product(
+            request_id=invoice_id,
+            service_id=f"{provider}",
+            billers_code=smart_card_number,
+            variation_code=package,
+            amount=str(amount),
+            phone=str(request.user.phone_number),
+            subscription_type='change'
         )
 
-        CableRequest.objects.create(
-            transaction=new_transaction,
-            provider=provider,
-            smart_card_number=smart_card_number,
-            package=package,
-            account_name=account_name,
-            amount=amount
-        )
+     # Log the API response for debugging
+    logger.debug(f"VTPass API Response: {response}")
 
-    return JsonResponse({'status': 'success', 'message': 'Cable subscription successful', 'transaction_id': new_transaction.invoice_id})
+     # Check if response is a string (error message) or a dictionary
+    if isinstance(response, str):
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Cable subscription failed: {response}',
+        }, status=400)
+
+    if response.get('code') == '000':
+        with transaction.atomic():
+            wallet.balance -= amount
+            wallet.save()
+
+            new_transaction = Transaction.objects.create(
+                user=request.user,
+                wallet=wallet,
+                amount=amount,
+                transaction_type='debit',
+                service='cable',
+                invoice_id=invoice_id,
+                status='success'
+            )
+
+            CableRequest.objects.create(
+                transaction=new_transaction,
+                provider=provider,
+                smart_card_number=smart_card_number,
+                package=package,
+                account_name=account_name,
+                amount=amount
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Cable subscription successful',
+            'transaction_id': new_transaction.invoice_id
+        })
+    else:
+        error_message = response.get('response_description', 'Cable subscription failed')
+        logger.error(f"Cable subscription failed: {error_message}")
+        return JsonResponse({
+            'status': 'error',
+            'message': error_message,
+            'details': response  # Include full response for debugging
+        }, status=400)
 
 @require_POST
 @csrf_protect
@@ -1014,3 +1079,46 @@ def vtpass_service_variations(request):
         return JsonResponse(response.json())
     except requests.RequestException as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+def get_cable_variations(request, provider):
+    url = f"https://sandbox.vtpass.com/api/service-variations?serviceID={provider}"
+    auth = (settings.VTPASS_EMAIL, settings.VTPASS_PASSWORD)
+    
+    response = requests.get(url, auth=auth)
+    
+    if response.status_code == 200:
+        return JsonResponse(response.json())
+    else:
+        return JsonResponse({'error': 'Failed to fetch variation codes'}, status=400)
+
+
+logger = logging.getLogger(__name__)
+
+@require_POST
+@csrf_exempt
+def validate_smart_card(request):
+    data = json.loads(request.body)
+    provider = data.get('provider')
+    card_number = data.get('smart_card_number')
+
+    logger.debug(f"Validating smart card: provider={provider}, card_number={card_number}")
+
+    if not provider or not card_number:
+        return JsonResponse({'status': 'error', 'message': 'Provider and smart card number are required'}, status=400)
+
+    vtpass_api = VTPassAPI()
+    validation_result = vtpass_api.verify_smartcard(card_number, f"{provider}")
+
+    logger.debug(f"VTPass API response: {validation_result}")
+
+    if validation_result.get('code') == '000':
+        return JsonResponse({
+            'status': 'success',
+            'customer_name': validation_result['content'].get('Customer_Name'),
+            'current_bouquet': validation_result['content'].get('Current_Bouquet_Code'),
+            'renewal_amount': validation_result['content'].get('Renewal_Amount')
+        })
+    else:
+        error_message = validation_result.get('response_description') or 'Invalid smart card number'
+        logger.error(f"Smart card validation failed: {error_message}")
+        return JsonResponse({'status': 'error', 'message': error_message}, status=400)
