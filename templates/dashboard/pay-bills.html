@@ -85,7 +85,7 @@
                         <label for="amount" class="form-label">Amount</label>
                         <input type="number" class="form-control" id="amount" name="amount" step="0.01" readonly>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 d-none">
                         <label for="subscriptionType" class="form-label">Subscription Type</label>
                         <select class="form-select" id="subscriptionType" name="subscription_type" required>
                             <option value="change">Change Package</option>
@@ -105,9 +105,19 @@
                         <label for="electricityOperator" class="form-label">Choose Operator</label>
                         <select class="form-select form-select-lg" id="electricityOperator" name="operator">
                             <option selected>Select operator</option>
-                            <option value="ekedc">EKEDC</option>
-                            <option value="ikedc">IKEDC</option>
-                            <option value="aedc">AEDC</option>
+                            <option value="ikeja-electric">IKEDC</option>
+                            <option value="eko-electric">EKEDC</option>
+                            <option value="abuja-electric">AEDC</option>
+                            <option value="portharcourt-electric">PHED</option>
+                            <option value="jos-electric">JED</option>
+                            <option value="ibadan-electric">IBEDC</option>
+                            <option value="kaduna-electric">KAEDCO</option>
+                            <option value="enugu-electric">EEDC</option>
+                            <option value="benin-electric">BEDC</option>
+                            <option value="aba-electric">ABA</option>
+                            <option value="yola-electric">YEDC</option>
+                            <option value="kano-electric">KEDCO</option>
+                            <!-- Add more operators as needed -->
                         </select>
                     </div>
                     <div class="mb-4">
@@ -123,18 +133,27 @@
                         </select>
                     </div>
                     <div class="mb-4">
-                        <label for="electricityAccountName" class="form-label">Account Name</label>
-                        <input type="text" class="form-control form-control-lg" id="electricityAccountName" name="account_name" placeholder="Enter account name">
+                        <button type="button" id="verifyMeterBtn" class="btn btn-secondary">Verify Meter</button>
                     </div>
-                    <div class="mb-4">
-                        <label for="electricityAmount" class="form-label">Amount</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text">₦</span>
-                            <input type="number" class="form-control" id="electricityAmount" name="amount" placeholder="Enter amount to buy" required>
+                    <div id="meterDetails" style="display: none;">
+                        <div class="mb-4">
+                            <label for="electricityAccountName" class="form-label">Account Name</label>
+                            <input type="text" class="form-control form-control-lg" id="electricityAccountName" name="account_name" readonly>
                         </div>
-                    </div>
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-lg">Pay</button>
+                        <div class="mb-4">
+                            <label for="electricityAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control form-control-lg" id="electricityAddress" name="address" readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label for="electricityAmount" class="form-label">Amount</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" class="form-control" id="electricityAmount" name="amount" placeholder="Enter amount to buy" required>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Pay</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -314,6 +333,78 @@
                 alert('An error occurred. Please try again.');
             });
         });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const electricityOperator = document.getElementById('electricityOperator');
+        const meterNumber = document.getElementById('meterNumber');
+        const electricityPlan = document.getElementById('electricityPlan');
+        const verifyMeterBtn = document.getElementById('verifyMeterBtn');
+        const meterDetails = document.getElementById('meterDetails');
+        const electricityAccountName = document.getElementById('electricityAccountName');
+        const electricityAddress = document.getElementById('electricityAddress');
+
+        verifyMeterBtn.addEventListener('click', function() {
+            const operator = electricityOperator.value;
+            const meter = meterNumber.value;
+            const plan = electricityPlan.value;
+
+            if (!operator || operator === 'Select operator') {
+                alert('Please select an operator');
+                return;
+            }
+
+            if (!meter) {
+                alert('Please enter a meter number');
+                return;
+            }
+
+            if (!plan || plan === 'Select plan') {
+                alert('Please select a plan');
+                return;
+            }
+
+            // Make an AJAX call to your backend to verify the meter
+            fetch('/verify-meter/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `operator=${operator}&meter_number=${meter}&meter_type=${plan}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    electricityAccountName.value = data.account_name || 'Account not found';
+                    electricityAddress.value = data.address || 'Account not found';
+                    meterDetails.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while verifying the meter. Please try again.');
+            });
+        });
+
+        // Function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     });
 </script>
 {% endblock %}

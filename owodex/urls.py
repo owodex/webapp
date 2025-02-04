@@ -45,6 +45,7 @@ urlpatterns = [
     path('pay_bills/', pay_bills, name ='pay_bills'),
     path('api/cable/variation-codes/<str:provider>/',get_cable_variations, name='cable_variations'),
     path('validate-smart-card/', validate_smart_card, name='validate_smart_card'),
+    path('verify-meter/', verify_meter, name='verify_meter'),
     path('airtime_data/', airtime_data, name ='airtime_data'),
     path('bonus/', bonus, name ='bonus'),
     path('withdraw-bonus/', withdraw_bonus, name ='withdraw_bonus'),

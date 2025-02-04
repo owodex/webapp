@@ -855,123 +855,138 @@ def submit_cable_request(request):
 
     vtpass_api = VTPassCableAPI()
 
-    # Prepare the payload for VTPass API
-    if subscription_type == 'renew':
-        response = vtpass_api.renew_bouquet(
-            request_id=invoice_id,
-            service_id=f"{provider}",
-            billers_code=smart_card_number,
-            amount=str(amount),
-            phone=str(request.user.phone_number)
-        )
-    else:
-        response = vtpass_api.purchase_product(
-            request_id=invoice_id,
-            service_id=f"{provider}",
-            billers_code=smart_card_number,
-            variation_code=package,
-            amount=str(amount),
-            phone=str(request.user.phone_number),
-            subscription_type='change'
-        )
+    try:
+        # Prepare the payload for VTPass API
+        if subscription_type == 'renew':
+            response = vtpass_api.renew_bouquet(
+                request_id=invoice_id,
+                service_id=f"{provider}",
+                billers_code=smart_card_number,
+                amount=str(amount),
+                phone=str(request.user.phone_number)
+            )
+        else:
+            response = vtpass_api.purchase_product(
+                request_id=invoice_id,
+                service_id=f"{provider}",
+                billers_code=smart_card_number,
+                variation_code=package,
+                amount=str(amount),
+                phone=str(request.user.phone_number),
+                subscription_type='change'
+            )
 
-     # Log the API response for debugging
-    logger.debug(f"VTPass API Response: {response}")
+       # Log the API response for debugging
+        logger.debug(f"VTPass API Response: {response}")
 
-     # Check if response is a string (error message) or a dictionary
-    if isinstance(response, str):
-        return JsonResponse({
-            'status': 'error',
-            'message': f'Cable subscription failed: {response}',
-        }, status=400)
+        # Check if response is a string (error message) or a dictionary
+        if isinstance(response, str):
+            raise ValueError(f'Cable subscription failed: {response}')
 
-    if response.get('code') == '000':
-        with transaction.atomic():
-            wallet.balance -= amount
-            wallet.save()
+        if response.get('code') == '000':
+            with transaction.atomic():
+                wallet.balance -= amount
+                wallet.save()
+
+                new_transaction = Transaction.objects.create(
+                    user=request.user,
+                    wallet=wallet,
+                    amount=amount,
+                    transaction_type='debit',
+                    service='cable',
+                    invoice_id=response.get('requestId'),
+                    status='completed'
+                )
+
+                if new_transaction:
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Cable subscription successful',
+                        'transaction_id': new_transaction.invoice_id  # Make sure this field exists
+                    })
+
+                CableRequest.objects.create(
+                    transaction=new_transaction,
+                    provider=provider,
+                    smart_card_number=smart_card_number,
+                    package=package,
+                    account_name=account_name,
+                    amount=amount
+                )
+
+            return JsonResponse({'status': 'success', 'message': 'Cable subscription successful'})
+        else:
+            raise ValueError(f'Cable subscription failed: {response.get("response_description")}')
+
+    except Exception as e:
+        logger.error(f"Cable subscription error: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@require_POST
+@csrf_protect
+def submit_electricity_request(request):
+    if request.method == 'POST':
+        meter_number = request.POST.get('meter_number')
+        account_name = request.POST.get('account_name')
+        operator = request.POST.get('operator')
+        plan = request.POST.get('plan')
+        amount = request.POST.get('amount')
+        phone = request.user.phone_number
+
+        # Generate a unique invoice ID
+        invoice_id = str(uuid.uuid4().hex)[:20]
+
+        if not all([meter_number, operator, plan, account_name, amount]):
+            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
+
+        try:
+            amount = Decimal(amount)
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid amount'}, status=400)
+
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+
+        if wallet.balance < amount:
+            return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
+
+        vtpass_api = VTPassAPI()
+        response = vtpass_api.buy_electricity(meter_number, operator, plan, amount, str(phone))
+
+        if response.get('code') == '000':
+            with transaction.atomic():
+                wallet.balance -= amount
+                wallet.save()
 
             new_transaction = Transaction.objects.create(
                 user=request.user,
                 wallet=wallet,
                 amount=amount,
                 transaction_type='debit',
-                service='cable',
+                service='electricity',
                 invoice_id=invoice_id,
-                status='success'
+                status='completed'
             )
 
-            CableRequest.objects.create(
+            ElectricityRequest.objects.create(
                 transaction=new_transaction,
-                provider=provider,
-                smart_card_number=smart_card_number,
-                package=package,
+                meter_number=meter_number,
+                plan=plan,
+                operator=operator,
                 account_name=account_name,
-                amount=amount
+                amount=amount,
+                token=response.get('purchased_code', '')
             )
 
-        return JsonResponse({
-            'status': 'success',
-            'message': 'Cable subscription successful',
-            'transaction_id': new_transaction.invoice_id
-        })
-    else:
-        error_message = response.get('response_description', 'Cable subscription failed')
-        logger.error(f"Cable subscription failed: {error_message}")
-        return JsonResponse({
-            'status': 'error',
-            'message': error_message,
-            'details': response  # Include full response for debugging
-        }, status=400)
+            return JsonResponse({
+                    'status': 'success',
+                    'message': 'Electricity purchase successful',
+                    'transaction_id': new_transaction.invoice_id,
+                    'token': response.get('purchased_code', '')
+                })
+        else:
+            return JsonResponse({'status': 'error', 'message': response.get('response_description', 'Transaction failed')}, status=400)
 
-@require_POST
-@csrf_protect
-def submit_electricity_request(request):
-    meter_number = request.POST.get('meter_number')
-    account_name = request.POST.get('account_name')
-    operator = request.POST.get('operator')
-    plan = request.POST.get('plan')
-    amount = request.POST.get('amount')
-
-     # Generate a unique invoice ID
-    invoice_id = str(uuid.uuid4().hex)[:20]
-
-    if not all([meter_number, operator, plan, account_name, amount]):
-        return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
-
-    try:
-        amount = Decimal(amount)
-    except ValueError:
-        return JsonResponse({'status': 'error', 'message': 'Invalid amount'}, status=400)
-
-    wallet, _ = Wallet.objects.get_or_create(user=request.user)
-
-    if wallet.balance < amount:
-        return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
-
-    with transaction.atomic():
-        wallet.balance -= amount
-        wallet.save()
-
-        new_transaction = Transaction.objects.create(
-            user=request.user,
-            wallet=wallet,
-            amount=amount,
-            transaction_type='debit',
-            service='electricity',
-            invoice_id=invoice_id,
-            status='pending'
-        )
-
-        ElectricityRequest.objects.create(
-            transaction=new_transaction,
-            meter_number=meter_number,
-            plan=plan,
-            operator=operator,
-            account_name=account_name,
-            amount=amount
-        )
-
-    return JsonResponse({'status': 'success', 'message': 'Electricity bill payment successful', 'transaction_id': new_transaction.invoice_id})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 @login_required
 def trade_giftcard(request):
@@ -1122,3 +1137,35 @@ def validate_smart_card(request):
         error_message = validation_result.get('response_description') or 'Invalid smart card number'
         logger.error(f"Smart card validation failed: {error_message}")
         return JsonResponse({'status': 'error', 'message': error_message}, status=400)
+    
+@require_POST
+@csrf_exempt
+def verify_meter(request):
+    operator = request.POST.get('operator')
+    meter_number = request.POST.get('meter_number')
+    meter_type = request.POST.get('meter_type')
+
+    if not all([operator, meter_number, meter_type]):
+        return JsonResponse({'error': 'All fields are required'}, status=400)
+
+    vtpass_api = VTPassAPI()
+    response = vtpass_api.verify_meter(operator, meter_number, meter_type)
+
+    # Log the entire response for debugging
+    logger.debug(f"VTPass API Response: {response}")
+
+    if response.get('code') == '000':
+        content = response.get('content', {})
+        return JsonResponse({
+            'account_name': content.get('Customer_Name') or content.get('customerName') or 'N/A',
+            'address': content.get('Address') or content.get('customerAddress') or 'N/A',
+            'meter_number': content.get('Meter_Number') or content.get('meterNumber') or meter_number,
+            'customer_details': content  # Include all customer details for frontend use
+        })
+    else:
+        error_message = response.get('response_description') or 'Verification failed'
+        logger.error(f"Meter verification failed: {error_message}")
+        return JsonResponse({
+            'error': error_message,
+            'details': response  # Include full response for debugging
+        }, status=400)

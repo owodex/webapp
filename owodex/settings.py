@@ -153,11 +153,11 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Add these lines to your settings.py
-VTPASS_API_URL = 'https://sandbox.vtpass.com/api'
-VTPASS_EMAIL = 'Bornorbang@gmail.com'
-VTPASS_PASSWORD = 'Bornorbang@gmail.com'
-VTPASS_API_KEY = 'aa364346f5edddebbc38b3c827fe7cab'
-VTPASS_SECRET_KEY = 'SK_7434a8bbaed89857c57b8440b2b4c7c28993157b793'
+VTPASS_API_URL = os.getenv('VTPASS_API_URL')
+VTPASS_EMAIL = os.getenv('VTPASS_EMAIL')
+VTPASS_PASSWORD = os.getenv('VTPASS_PASSWORD')
+VTPASS_API_KEY = os.getenv('VTPASS_API_KEY')
+VTPASS_SECRET_KEY = os.getenv('VTPASS_SECRET_KEY')
 
 LOGGING = {
     'version': 1,

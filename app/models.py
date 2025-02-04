@@ -189,6 +189,7 @@ class ElectricityRequest(models.Model):
     plan = models.CharField(max_length=10, choices=PLAN_CHOICES)
     account_name = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    token = models.CharField(max_length=50, null=True, blank=True)
     transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name= 'electricity_request', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
