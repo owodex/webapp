@@ -18,72 +18,60 @@
 <div class="container-fluid py-5 position-relative">
     <div class="container rate-calculator-container">
         <div class="row justify-content-center">
-                <div class="rate-calculator-card">
-                    <h3 class="rate-calculator-title">Calculate Your Rate</h3>
-                    <form id="rateCalculatorForm">
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <div class="rate-calculator-input">
-                                    <label for="selectCard" class="form-label">Select Card</label>
-                                    <select class="form-select" id="selectCard">
-                                        <option selected>Choose a card...</option>
-                                        <option value="1">Card 1</option>
-                                        <option value="2">Card 2</option>
-                                        <option value="3">Card 3</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="rate-calculator-input">
-                                    <label for="selectCurrency" class="form-label">Select Currency</label>
-                                    <select class="form-select" id="selectCurrency">
-                                        <option selected>Choose a currency...</option>
-                                        <option value="USD">USD</option>
-                                        <option value="EUR">EUR</option>
-                                        <option value="GBP">GBP</option>
-                                    </select>
-                                </div>
+            <div class="rate-calculator-card">
+                <h3 class="rate-calculator-title">Calculate Your Rate</h3>
+                <form id="rateCalculatorForm">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="rate-calculator-input">
+                                <label for="selectCard" class="form-label">Select Card</label>
+                                <select class="form-select" id="selectCard">
+                                    <option value="">Choose a card...</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="row mt-3">
-                            <div class="col-lg-6">
-                                <div class="rate-calculator-input">
-                                    <label for="selectCardType" class="form-label">Select Card Type</label>
-                                    <select class="form-select" id="selectCardType">
-                                        <option selected>Choose a card type...</option>
-                                        <option value="1">Type 1</option>
-                                        <option value="2">Type 2</option>
-                                        <option value="3">Type 3</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="rate-calculator-input">
-                                    <label for="selectDenomination" class="form-label">Select Denomination</label>
-                                    <select class="form-select" id="selectDenomination">
-                                        <option selected>Choose a denomination...</option>
-                                        <option value="10">$10</option>
-                                        <option value="25">$25</option>
-                                        <option value="50">$50</option>
-                                        <option value="100">$100</option>
-                                    </select>
-                                </div>
+                        <div class="col-lg-6">
+                            <div class="rate-calculator-input">
+                                <label for="selectCurrency" class="form-label">Select Currency</label>
+                                <select class="form-select" id="selectCurrency" disabled>
+                                    <option value="" selected>Choose a currency...</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="rate-calculator-input">
-                                    <label for="enterAmount" class="form-label">Enter Amount ($)</label>
-                                    <input type="number" class="form-control" id="enterAmount" placeholder="Enter amount">
-                                </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-lg-6">
+                            <div class="rate-calculator-input">
+                                <label for="selectCardType" class="form-label">Select Card Type</label>
+                                <select class="form-select" id="selectCardType" disabled>
+                                    <option value="" selected>Choose a card type...</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="text-center mt-3">
-                            <button type="submit" class="rate-calculator-button">Calculate Rate</button>
+                        <div class="col-lg-6">
+                            <div class="rate-calculator-input">
+                                <label for="selectDenomination" class="form-label">Select Denomination</label>
+                                <select class="form-select" id="selectDenomination" disabled>
+                                    <option value="" selected>Choose a denomination...</option>
+                                </select>
+                            </div>
                         </div>
-                    </form>
-                    <div id="calculationResult" class="rate-calculator-result mt-3"></div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="rate-calculator-input">
+                                <label for="enterAmount" class="form-label">Enter Amount ($)</label>
+                                <input type="number" class="form-control" id="enterAmount" placeholder="Enter amount">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button type="submit" class="rate-calculator-button">Calculate Rate</button>
+                    </div>
+                </form>
+                <div class="text-center mt-5" id="calculationResult">
                 </div>
+            </div>
         </div>
     </div>
 </div>
@@ -91,11 +79,110 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    document.getElementById('rateCalculatorForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Add your rate calculation logic here
-        document.getElementById('calculationResult').innerHTML = 'Calculation result will be shown here.';
-    });
-</script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectCard = document.getElementById('selectCard');
+            const selectCurrency = document.getElementById('selectCurrency');
+            const selectCardType = document.getElementById('selectCardType');
+            const selectDenomination = document.getElementById('selectDenomination');
+            const enterAmount = document.getElementById('enterAmount');
+            const calculationResult = document.getElementById('calculationResult');
+        
+            // Fetch gift cards and populate the dropdown
+            fetch("/api/get-gift-cards/")
+            .then(response => response.json())
+            .then(data => {
+                selectCard.innerHTML = '<option value="">Choose a card...</option>';
+                data.forEach(card => {
+                    const option = document.createElement("option");
+                    option.value = card.id;
+                    option.textContent = card.name;
+                    selectCard.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching gift cards:', error));
+        
+            // Fetch currencies and card types when a card is selected
+            selectCard.addEventListener('change', function () {
+                const giftcardId = this.value;
+                if (!giftcardId) return;
+        
+                fetch(`/api/get-currencies/?giftcard_id=${giftcardId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        selectCurrency.innerHTML = '<option value="">Choose a currency...</option>';
+                        data.forEach(currency => {
+                            selectCurrency.innerHTML += `<option value="${currency.currency_name}">${currency.currency_name}</option>`;
+                        });
+                        selectCurrency.disabled = false;
+                    });
+        
+                fetch(`/api/get-card-types/?giftcard_id=${giftcardId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        selectCardType.innerHTML = '<option value="">Choose a card type...</option>';
+                        data.forEach(type => {
+                            selectCardType.innerHTML += `<option value="${type.type}">${type.type}</option>`;
+                        });
+                        selectCardType.disabled = false;
+                    });
+            });
+        
+            // Fetch denominations when a card type is selected
+            selectCardType.addEventListener('change', function () {
+                const giftcardId = selectCard.value;
+                if (!giftcardId || !this.value) return;
+        
+                fetch(`/api/get-denominations/?giftcard_id=${giftcardId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        selectDenomination.innerHTML = '<option value="">Choose a denomination...</option>';
+                        data.forEach(denomination => {
+                            selectDenomination.innerHTML += `<option value="${denomination.value}">${denomination.value}</option>`;
+                        });
+                        selectDenomination.disabled = false;
+                    });
+            });
+        
+            // Form submission to calculate the rate
+            document.getElementById('rateCalculatorForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+        
+                const giftcardName = selectCard.options[selectCard.selectedIndex].text;
+                const currencyCode = selectCurrency.value;
+                const cardType = selectCardType.value;
+                const denominationValue = selectDenomination.value;
+                const amount = parseFloat(enterAmount.value);
+        
+                if (!giftcardName || !currencyCode || !cardType || !denominationValue || isNaN(amount)) {
+                    calculationResult.innerHTML = '<p class="text-danger">Please fill all fields correctly.</p>';
+                    return;
+                }
+        
+                fetch(`/api/get-g-rate/?giftcard=${giftcardName}&currency=${currencyCode}&type=${cardType}&denomination=${denominationValue}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            calculationResult.innerHTML = `<p class="text-danger">${data.error}</p>`;
+                        } else {
+                            const totalAmount = amount * data.rate;
+                            const formattedAmount = totalAmount.toLocaleString('en-NG', {
+                                style: 'currency',
+                                currency: 'NGN',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            calculationResult.innerHTML = `
+                                <h4 class="display-4">${formattedAmount}</h4>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        calculationResult.innerHTML = '<p class="text-danger">An error occurred while calculating the rate.</p>';
+                    });
+            });
+        });        
+    </script>
+
 {% endblock %}

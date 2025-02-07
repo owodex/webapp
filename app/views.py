@@ -265,6 +265,7 @@ def user_login(request):
     return render(request, 'login.html')
 
 def rate_calculator(request):
+    giftcards = GiftCard.objects.filter(is_active=True)
     return render(request, "rate_calculator.html")
 
 def terms(request):
@@ -1245,3 +1246,80 @@ def get_rate(request):
         return JsonResponse({'error': str(e)}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+def get_gift_cards(request):
+    """Fetches all available gift cards."""
+    gift_cards = GiftCard.objects.values('id', 'name')  # Adjust field names if necessary
+    return JsonResponse(list(gift_cards), safe=False)
+
+def get_currencies(request):
+    giftcard_id = request.GET.get('giftcard_id')
+    currencies = GiftCardCurrency.objects.filter(giftcard_id=giftcard_id).values('id', 'currency_name')
+    return JsonResponse(list(currencies), safe=False)
+
+def get_card_types(request):
+    giftcard_id = request.GET.get('giftcard_id')
+    card_types = GiftCardType.objects.filter(giftcard_id=giftcard_id).values('id', 'type')
+    return JsonResponse(list(card_types), safe=False)
+
+def get_denominations(request):
+    giftcard_id = request.GET.get('giftcard_id')
+    denominations = GiftCardDenomination.objects.filter(giftcard_id=giftcard_id).values('id', 'value')
+    return JsonResponse(list(denominations), safe=False)      
+
+@require_GET
+def get_g_rate(request):
+    giftcard_name = request.GET.get('giftcard')
+    currency_name = request.GET.get('currency')  # Use currency_name now
+    card_type_name = request.GET.get('type')
+    denomination_value = request.GET.get('denomination')
+    amount = request.GET.get('amount', 1)  # Default to 1
+
+    if not all([giftcard_name, currency_name, card_type_name, denomination_value]):
+        return JsonResponse({'error': 'Missing required parameters'}, status=400)
+
+    try:
+        amount = float(amount)
+
+        giftcard = GiftCard.objects.get(name=giftcard_name)
+        
+        # Lookup by currency_name instead of currency
+        currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency_name__iexact=currency_name)
+        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type_name)
+        denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
+        rate_obj = GiftCardRate.objects.get(
+            giftcard=giftcard, currency=currency, card_type=card_type, denomination=denomination
+        )
+
+        rate = float(rate_obj.rate)
+        total_value = round(rate * amount, 2)
+
+        return JsonResponse({
+            'rate': rate,
+            'total_value': total_value,
+            'giftcard': giftcard.name,
+            'currency': currency.currency_name,  # Return currency_name
+            'type': card_type.type,
+            'denomination': denomination.value
+        })
+
+    except GiftCard.DoesNotExist:
+        return JsonResponse({'error': f'GiftCard "{giftcard_name}" not found'}, status=404)
+
+    except GiftCardCurrency.DoesNotExist:
+        return JsonResponse({'error': f'Currency "{currency_name}" not found for gift card "{giftcard_name}"'}, status=404)
+
+    except GiftCardType.DoesNotExist:
+        return JsonResponse({'error': f'Card type "{card_type_name}" not found for gift card "{giftcard_name}"'}, status=404)
+
+    except GiftCardDenomination.DoesNotExist:
+        return JsonResponse({'error': f'Denomination "{denomination_value}" not found for gift card "{giftcard_name}"'}, status=404)
+
+    except GiftCardRate.DoesNotExist:
+        return JsonResponse({'error': 'Rate not found for the given parameters'}, status=404)
+
+    except ValueError:
+        return JsonResponse({'error': 'Invalid denomination or amount value'}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Internal server error: {str(e)}'}, status=500)
