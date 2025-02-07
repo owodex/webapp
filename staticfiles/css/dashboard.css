@@ -346,3 +346,8 @@ body {
 .wallet-balance-card > *:last-child {
     margin-bottom: 0;
 }
+
+#notificationBadge {
+    display: none;
+    font-size: 0.75em;
+}

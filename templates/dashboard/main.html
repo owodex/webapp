@@ -73,7 +73,14 @@
                         </div>
                     </form>
                     <a href="#" class="btn btn-sm btn-primary me-2 d-lg-none" id="mobileSearchBtn"><i class="fa fa-search"></i></a>
-                    <a href="#" class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#notificationsModal"><i class="fa fa-bell"></i></a>
+                    <a href="#" class="btn btn-sm btn-primary me-2 position-relative" id="notificationBtn" data-bs-toggle="modal" data-bs-target="#notificationsModal">
+                        <i class="fa fa-bell"></i>
+                        {% if unread_notification_count > 0 %}
+                            <span id="notificationCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notification_count }}
+                            </span>
+                        {% endif %}
+                    </a>
                     <a href="{% url 'settings' %}" class="btn btn-sm btn-primary me-2"><i class="fa fa-cog"></i></a>
                     <a href="#" class="btn btn-sm btn-primary profile-icon" data-bs-toggle="modal" data-bs-target="#profileModal">
                         <i class="fa fa-user"></i>
@@ -103,7 +110,7 @@
             </div>
         </div>
         <div id="theme-toggle-container">
-            <button id="themeToggle" class="btn btn-outline-primary">
+            <button id="themeToggle" class="btn btn-outline-primary d-none d-lg-block">
                 <i class="fas fa-sun"></i>
             </button>
         </div>
@@ -173,35 +180,36 @@
 
  <!-- Notifications Modal -->
 <div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content custom-modal">
-          <div class="modal-header">
-              <h5 class="modal-title" id="notificationsModalLabel">Recent Notifications</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-              {% if user_notifications %}
-                  {% for notification in user_notifications %}
-                      <div class="notification-item d-flex align-items-center p-3 border-bottom">
-                          <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
-                          <div class="flex-grow-1">
-                              <p class="mb-0">{{ notification.message }}</p>
-                          </div>
-                          <small class="text-muted">{{ notification.created_at|date:"M d, Y" }}</small>
-                      </div>
-                  {% endfor %}
-              {% else %}
-                  <div class="notification-item d-flex align-items-center p-3">
-                      <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
-                      <p class="mb-0">No new notifications</p>
-                  </div>
-              {% endif %}
-          </div>
-          <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          </div>
-      </div>
-  </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationsModalLabel">Recent Notifications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="notificationsContainer">
+                {% if user_notifications %}
+                    {% for notification in user_notifications %}
+                        <div class="notification-item d-flex align-items-center p-3 border-bottom {% if not notification.is_read %}unread{% endif %}" data-notification-id="{{ notification.id }}">
+                            <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
+                            <div class="flex-grow-1">
+                                <p class="mb-0">{{ notification.message }}</p>
+                            </div>
+                            <small class="text-muted">{{ notification.created_at|date:"M d, Y" }}</small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="notification-item d-flex align-items-center p-3">
+                        <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
+                        <p class="mb-0">No notifications</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="markAllRead">Mark all as read</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
     <!-- JavaScript Libraries -->
@@ -321,7 +329,7 @@
             } else if (service.includes('cable')) {
                 window.location.href = "{% url 'submit_electricity_request' %}";
             } else if (service.includes('giftcard')) {
-                window.location.href = "{% url 'trade_giftcard' %}";
+                window.location.href = "{% url 'giftcards' %}";
             } else if (service.includes('transaction')) {
                 window.location.href = "{% url 'transactions' %}";
             } else {
@@ -395,6 +403,49 @@
                     icon.classList.add('fa-sun');
                 }
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationsModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
+    
+            notificationBtn.addEventListener('click', function() {
+                // Open the notifications modal
+                notificationsModal.show();
+            });
+    
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#markAllRead').on('click', function() {
+                $.ajax({
+                    url: '{% url "mark_all_notifications_read" %}',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Remove 'unread' class from all notification items
+                            $('.notification-item').removeClass('unread');
+                            
+                            // Remove the badge completely
+                            $('#notificationCount').remove();
+                            
+                            // Update the modal title
+                            $('#notificationsModalLabel').text('No New Notifications');
+                            
+                            // Clear the notifications container
+                            $('#notificationsContainer').html('<div class="notification-item d-flex align-items-center p-3"><i class="fas fa-info-circle text-info me-3 fa-2x"></i><p class="mb-0">No notifications</p></div>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error marking notifications as read:", error);
+                    }
+                });
+            });
         });
     </script>
 </body>

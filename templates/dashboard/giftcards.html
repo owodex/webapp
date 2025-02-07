@@ -17,8 +17,25 @@
             </div>
         </div>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="row" id="giftcardContainer">
-            <!-- Giftcard images will be dynamically inserted here -->
+            {% for giftcard in giftcards %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <a href="{% url 'trade_giftcard' giftcard_id=giftcard.id %}" class="giftcard-link">
+                        <div class="card h-100">
+                            <img src="{{ giftcard.image.url }}" class="card-img-top" alt="{{ giftcard.name }} giftcard">
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -27,54 +44,39 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const giftcards = [
-            'amazon.png', 'Apple.png', 'google play.png', 'steam.png',
-            'xbox.png', 'itunes.png', 'roblox.png', 'macy.png', 'nordstrom.png',
-            'itunes.png', 'ebay.png', 'target.png',
-            'cvs.png', 'amex.png', 'nike.png', 'coach.png', 'dick.png',
-            'footlocker.png', 'vanilla.png', 'sephora.png', 'netspend.png',
-            'mastercard.png', 'kohl.png', 'finishline.png', 'gamestop.png', 'razergold.png'
-        ];
-
-        const container = document.getElementById('giftcardContainer');
-
-        giftcards.forEach(card => {
-            const col = document.createElement('div');
-            col.className = 'col-lg-3 col-md-4 col-sm-6 mb-4';
-
-            const link = document.createElement('a');
-            link.href = `{% url 'trade_giftcard' %}?name=${encodeURIComponent(card.split('.')[0])}&image=${encodeURIComponent(card)}`;
-            link.className = 'text-decoration-none';
-
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'card h-100';
-
-            const img = document.createElement('img');
-            img.src = `{% static 'img/giftcards/' %}${card}`;
-            img.className = 'card-img-top';
-            img.alt = card.split('.')[0] + ' giftcard';
-
-            cardDiv.appendChild(img);
-            link.appendChild(cardDiv);
-            col.appendChild(link);
-            container.appendChild(col);
-        });
-
         const searchInput = document.getElementById('searchGiftcards');
         const searchBtn = document.getElementById('searchButton');
+        const container = document.getElementById('giftcardContainer');
 
         function filterGiftcards() {
             const searchTerm = searchInput.value.toLowerCase();
             const cards = container.getElementsByClassName('col-lg-3');
-
+            let visibleCards = 0;
+        
+            // Remove any existing "No results" message
+            const existingMessage = container.querySelector('.no-results-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+        
             Array.from(cards).forEach(card => {
                 const alt = card.querySelector('img').alt.toLowerCase();
                 if (alt.includes(searchTerm)) {
                     card.style.display = '';
+                    visibleCards++;
                 } else {
                     card.style.display = 'none';
                 }
             });
+        
+            // Check if no cards are visible
+            if (visibleCards === 0) {
+                // Show "No results found" message
+                const messageElement = document.createElement('div');
+                messageElement.className = 'col-12 text-center no-results-message';
+                messageElement.innerHTML = '<p class="mt-4">No giftcards found matching your search.</p>';
+                container.appendChild(messageElement);
+            }
         }
 
         searchBtn.addEventListener('click', filterGiftcards);

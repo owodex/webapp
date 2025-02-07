@@ -235,7 +235,7 @@ class GiftCardImage(models.Model):
         return f"Image for {self.transaction}"
     
 class Notification(models.Model):
-    title = models.CharField(max_length=255, null=True, blank=True)
+    title = models.CharField(max_length=255, null=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
@@ -248,6 +248,10 @@ class Notification(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    @property
+    def recipient_list(self):
+        return "All Users" if self.is_for_all_users else ", ".join(user.username for user in self.users.all())
+
 class Beneficiary(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     account_number = models.CharField(max_length=20)
@@ -259,3 +263,46 @@ class Beneficiary(models.Model):
 
     class Meta:
         verbose_name_plural = "Beneficiaries"
+
+class GiftCard(models.Model):
+    name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='giftcards/')
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+class GiftCardCurrency(models.Model):
+    giftcard = models.ForeignKey(GiftCard, on_delete=models.CASCADE, related_name='currencies')
+    currency = models.CharField(max_length=2)
+    currency_name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.giftcard.name} - {self.currency_name}"
+
+class GiftCardType(models.Model):
+    giftcard = models.ForeignKey(GiftCard, on_delete=models.CASCADE, related_name='types')
+    type = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.giftcard.name} - {self.type}"
+
+class GiftCardDenomination(models.Model):
+    giftcard = models.ForeignKey(GiftCard, on_delete=models.CASCADE, related_name='denominations')
+    value = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.giftcard.name} - ${self.value}"
+    
+class GiftCardRate(models.Model):
+    giftcard = models.ForeignKey(GiftCard, on_delete=models.CASCADE, related_name='rates')
+    currency = models.ForeignKey(GiftCardCurrency, on_delete=models.CASCADE)
+    card_type = models.ForeignKey(GiftCardType, on_delete=models.CASCADE)
+    denomination = models.ForeignKey(GiftCardDenomination, on_delete=models.CASCADE)
+    rate = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = ('giftcard', 'currency', 'card_type', 'denomination')
+
+    def __str__(self):
+        return f"{self.giftcard.name} - {self.currency.currency_name} - {self.card_type.type} - ${self.denomination.value} - Rate: {self.rate}"

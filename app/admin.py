@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Transaction, Beneficiary, GiftCardImage, GiftCardTransaction, Notification, CableRequest, ElectricityRequest, Wallet, AirtimeRequest, DataRequest
+from .models import CustomUser, Transaction, Beneficiary, GiftCardRate, GiftCardCurrency, GiftCardDenomination, GiftCardType, GiftCard, GiftCardImage, GiftCardTransaction, Notification, CableRequest, ElectricityRequest, Wallet, AirtimeRequest, DataRequest
 from django.urls import path
 from .views import send_notification
 from django.db import models
@@ -205,6 +205,33 @@ class BeneficiaryAdmin(admin.ModelAdmin):
     list_display = ('user', 'name', 'account_number', 'bank_name')
     search_fields = ('user__username', 'user__email', 'name', 'account_number', 'bank_name')
 
+class GiftCardCurrencyInline(admin.TabularInline):
+    model = GiftCardCurrency
+    extra = 1
+
+class GiftCardTypeInline(admin.TabularInline):
+    model = GiftCardType
+    extra = 1
+
+class GiftCardDenominationInline(admin.TabularInline):
+    model = GiftCardDenomination
+    extra = 1
+
+@admin.register(GiftCard)
+class GiftCardAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_active')
+    inlines = [GiftCardCurrencyInline, GiftCardTypeInline, GiftCardDenominationInline]
+
+    def get_inline_instances(self, request, obj=None):
+        if not obj:
+            return []
+        return super().get_inline_instances(request, obj)
+
+# Optionally, you can also register these models individually
+admin.site.register(GiftCardCurrency)
+admin.site.register(GiftCardType)
+admin.site.register(GiftCardDenomination)
+admin.site.register(GiftCardRate)
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Wallet)
 admin.site.register(AirtimeRequest)

@@ -1,9 +1,9 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password, check_password
-from .models import CustomUser, Transaction, Notification, GiftCardImage, GiftCardTransaction, ElectricityRequest, CableRequest, AirtimeRequest, DataRequest, Wallet, Beneficiary
+from .models import CustomUser, Transaction, Notification, GiftCard, GiftCardRate, GiftCardCurrency, GiftCardType, GiftCardDenomination, GiftCardImage, GiftCardTransaction, ElectricityRequest, CableRequest, AirtimeRequest, DataRequest, Wallet, Beneficiary
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
@@ -209,7 +209,7 @@ def signup(request):
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 verification_link = request.build_absolute_uri(f'/verify-email/{uid}/{token}/')
 
-                # Send verification email
+                # Send verification email using send_mail
                 subject = 'Verify your email address'
                 html_message = render_to_string('verification_email.html', {
                     'user': user,
@@ -219,15 +219,20 @@ def signup(request):
                 from_email = 'support@owodex.com'
                 to_email = user.email
 
-                email = EmailMultiAlternatives(subject, plain_message, from_email, [to_email])
-                email.attach_alternative(html_message, "text/html")
-                email.send()
+                send_mail(
+                    subject,
+                    plain_message,
+                    from_email,
+                    [to_email],
+                    html_message=html_message
+                )
 
                 return render(request, 'signup_success.html', {'email': user.email})
         else:
             # Handle password mismatch error
             return render(request, 'signup.html', {'error': 'Passwords do not match'})
     return render(request, 'signup.html')
+
 
 
 def index(request):
@@ -307,12 +312,12 @@ def user_logout(request):
     messages.success(request, 'You have been successfully logged out.')
     return redirect('login')
 
-def giftcards(request):
-    return render(request, "dashboard/giftcards.html")
 
+@login_required
 def airtime_data(request):
     return render(request, 'dashboard/airtime-data.html')
 
+@login_required
 def pay_bills(request):
     return render(request, 'dashboard/pay-bills.html')
 
@@ -392,7 +397,7 @@ def withdraw_bonus(request):
     logger.info(f"User {user.id} - Successfully withdrew ₦{total_bonus} bonus")
     return JsonResponse({'success': True, 'message': f'Successfully withdrew ₦{total_bonus} bonus to your wallet.'})
 
-
+@login_required
 def send_notification(request):
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -616,6 +621,7 @@ def get_beneficiaries(request):
 #         'message': 'Invalid request method'
 #     }, status=400)
 
+@login_required
 def submit_airtime_request(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
@@ -827,6 +833,7 @@ class PhoneNumberEncoder(DjangoJSONEncoder):
             return str(obj)
         return super().default(obj)
 
+@login_required
 @require_POST
 @csrf_protect
 def submit_cable_request(request):
@@ -922,6 +929,7 @@ def submit_cable_request(request):
         logger.error(f"Cable subscription error: {str(e)}")
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
+@login_required
 @require_POST
 @csrf_protect
 def submit_electricity_request(request):
@@ -989,7 +997,27 @@ def submit_electricity_request(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
 @login_required
-def trade_giftcard(request):
+def giftcards(request):
+    giftcards = GiftCard.objects.filter(is_active=True)
+    context = {
+        'giftcards': giftcards,
+    }
+    return render(request, 'dashboard/giftcards.html', context)
+
+@login_required
+def trade_giftcard(request, giftcard_id):
+    giftcard = get_object_or_404(GiftCard, id=giftcard_id)
+    currencies = GiftCardCurrency.objects.filter(giftcard=giftcard)
+    types = GiftCardType.objects.filter(giftcard=giftcard)
+    denominations = GiftCardDenomination.objects.filter(giftcard=giftcard)
+
+    context = {
+        'giftcard': giftcard,
+        'currencies': currencies,
+        'types': types,
+        'denominations': denominations,
+    }
+        
     if request.method == 'POST':
         giftcard_name = request.POST.get('giftcard_name')
         currency = request.POST.get('giftCardCurrency')
@@ -1038,12 +1066,11 @@ def trade_giftcard(request):
                 image=image
             )
 
-        # Pass success message to the template
-        return render(request, 'dashboard/trade_giftcards.html', {
-            'success_message': 'Gift card trade request submitted successfully!',
-        })
+        # Redirect to the giftcards view with a success message
+        messages.success(request, 'Gift card trade request submitted successfully!')
+        return redirect('giftcards')
 
-    return render(request, 'dashboard/trade_giftcards.html')
+    return render(request, 'dashboard/trade_giftcards.html', context)
 
 def search(request):
     query = request.GET.get('q', '').lower()
@@ -1169,3 +1196,52 @@ def verify_meter(request):
             'error': error_message,
             'details': response  # Include full response for debugging
         }, status=400)
+
+@login_required
+def get_notification_count(request):
+    count = Notification.objects.filter(users=request.user, is_read=False).count()
+    return JsonResponse({'count': count})
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    Notification.objects.filter(users=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'success': True})
+
+@require_GET
+def get_rate(request):
+    giftcard_name = request.GET.get('giftcard')
+    currency_code = request.GET.get('currency')
+    card_type = request.GET.get('type')
+    denomination_value = request.GET.get('denomination')
+
+    try:
+        # Get the GiftCard instance
+        giftcard = GiftCard.objects.get(name=giftcard_name)
+
+        # Get the related instances
+        currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency_code)
+        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
+        denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
+
+        # Get the rate
+        rate = GiftCardRate.objects.get(
+            giftcard=giftcard,
+            currency=currency,
+            card_type=card_type,
+            denomination=denomination
+        )
+
+        return JsonResponse({
+            'rate': rate.rate,
+            'giftcard': giftcard.name,
+            'currency': currency.currency_name,
+            'type': card_type.type,
+            'denomination': denomination.value
+        })
+    except (GiftCard.DoesNotExist, GiftCardCurrency.DoesNotExist, 
+            GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist, 
+            GiftCardRate.DoesNotExist) as e:
+        return JsonResponse({'error': str(e)}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
