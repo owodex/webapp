@@ -657,6 +657,11 @@ def submit_airtime_request(request):
             if not Transaction.objects.filter(invoice_id=invoice_id).exists():
                 break
 
+
+        # Make API call to VTPass
+        vtpass_api = VTPassAPI()
+        api_response = vtpass_api.buy_airtime(phone, str(amount), network)
+
         try:
             # Create a new transaction
             new_transaction = Transaction.objects.create(
@@ -665,7 +670,7 @@ def submit_airtime_request(request):
                 amount=amount,
                 transaction_type='debit',
                 status='pending',
-                invoice_id=invoice_id
+                invoice_id=api_response.get('requestId')
             )
         except IntegrityError:
             # If there's still an IntegrityError, refund the user and return error response
@@ -675,10 +680,6 @@ def submit_airtime_request(request):
                 'status': 'error',
                 'message': 'Failed to create transaction. Please try again.'
             }, status=500)
-
-               # Make API call to VTPass
-        vtpass_api = VTPassAPI()
-        api_response = vtpass_api.buy_airtime(phone, str(amount), network)
 
         if api_response.get('code') == '000':
             # Successful transaction
@@ -726,9 +727,8 @@ def submit_data_request(request):
         phone = request.POST.get('phone')
         network = request.POST.get('network')
         data_plan = request.POST.get('data_plan')
-        amount = request.POST.get('amount')
 
-        logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}, amount={amount}")
+        logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}")
 
         # Initialize VTPass API
         vtpass_api = VTPassAPI()
@@ -772,36 +772,34 @@ def submit_data_request(request):
         # Generate a unique invoice ID
         invoice_id = str(uuid.uuid4().hex)[:20]
 
-        # Create a new transaction
-        new_transaction = Transaction.objects.create(
-            user=request.user,
-            service='data',
-            invoice_id=invoice_id,
-            amount=amount,
-            transaction_type='debit',
-            status='pending'
-        )
-
         # Make API call to VTPass
         api_response = vtpass_api.buy_data(phone, network, variation_code)
 
         if api_response.get('code') == '000':
             # Successful transaction
-            new_transaction.status = 'completed'
-            new_transaction.save()
+            with transaction.atomic():
+                # Deduct amount from wallet
+                wallet.balance -= amount
+                wallet.save()
 
-            # Deduct amount from wallet
-            wallet.balance -= amount
-            wallet.save()
+                # Create a new transaction
+                new_transaction = Transaction.objects.create(
+                    user=request.user,
+                    service='data',
+                    invoice_id=api_response.get('requestId'),
+                    amount=amount,
+                    transaction_type='debit',
+                    status='completed'
+                )
 
-            # Create a new data request
-            DataRequest.objects.create(
-                transaction=new_transaction,
-                phone=phone,
-                network=network,
-                data_plan=selected_variation['name'],
-                amount=amount,
-            )
+                # Create a new data request
+                DataRequest.objects.create(
+                    transaction=new_transaction,
+                    phone=phone,
+                    network=network,
+                    data_plan=selected_variation['name'],
+                    amount=amount,
+                )
 
             return JsonResponse({
                 'status': 'success',
@@ -811,9 +809,6 @@ def submit_data_request(request):
             })
         else:
             # Failed transaction
-            new_transaction.status = 'failed'
-            new_transaction.save()
-
             return JsonResponse({
                 'status': 'error',
                 'message': 'Data purchase failed: ' + api_response.get('response_description', 'Unknown error'),
@@ -972,7 +967,7 @@ def submit_electricity_request(request):
                 amount=amount,
                 transaction_type='debit',
                 service='electricity',
-                invoice_id=invoice_id,
+                invoice_id=response.get('requestId'),
                 status='completed'
             )
 
