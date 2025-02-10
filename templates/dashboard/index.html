@@ -1,6 +1,27 @@
 {% extends 'dashboard/main.html'%}
 {% load static %}
 
+{% block extra_css%}
+  <style>
+    .image-container {
+      position: relative;
+      overflow: hidden;
+  }
+  
+  .card-img-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+  }
+  
+  .card-img-top.active {
+      opacity: 1;
+      position: relative;
+  }
+  </style>
+{% endblock%}
 <!-- Main content area -->
 {% block maincontent %}        
 <div class="container-fluid dashboard-area">
@@ -63,19 +84,17 @@
               <div class="col-lg-4">
                 <!-- Image cards -->
                 <div class="card mb-4">
-                    <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_1.png" class="card-img-top" alt="Giftcard Promo">
+                    <div class="image-container">
+                        <img src="{% static 'img/owodex-banner-1.jpg' %}" class="card-img-top active" alt="Owodex banner 1">
+                        <img src="{% static 'img/owodex-banner-3.jpg' %}" class="card-img-top" alt="Owodex banner 3">
+                    </div>
                 </div>
                 <div class="card">
-                    <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_2.png" class="card-img-top" alt="Bill Payment">
+                    <div class="image-container">
+                        <img src="{% static 'img/owodex-banner-2.jpg' %}" class="card-img-top active" alt="Owodex banner 2">
+                        <img src="{% static 'img/owodex-banner-4.jpg' %}" class="card-img-top" alt="Owodex banner 4">
+                    </div>
                 </div>
-                {% comment %} <div class="card mt-4">
-                  <div class="card-body">
-                      <h5 class="card-title">Theme</h5>
-                      <button id="themeToggle" class="btn btn-outline-primary">
-                          <i class="fas fa-sun"></i> Light
-                      </button>
-                  </div>
-                </div> {% endcomment %}
               </div>
             </div>
           </div>
@@ -360,5 +379,26 @@ function updateTransactionList() {
       });
   });
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // ... existing DOMContentLoaded code ...
+  
+      // Image transition
+      function transitionImages() {
+          const containers = document.querySelectorAll('.image-container');
+          containers.forEach(container => {
+              const images = container.querySelectorAll('.card-img-top');
+              const activeImage = container.querySelector('.card-img-top.active');
+              const nextImage = activeImage.nextElementSibling || images[0];
+              
+              activeImage.classList.remove('active');
+              nextImage.classList.add('active');
+          });
+      }
+  
+      // Transition images every 5 seconds
+      setInterval(transitionImages, 5000);
+  });
+  </script>
 {% endblock %}
     
