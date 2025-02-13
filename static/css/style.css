@@ -765,9 +765,6 @@ I
     margin-bottom: 10px;
 }
 
-.blog-item:hover{
-    background-color: #000;
-}
 
 .image-carousel .carousel-item img {
     width: 100%;
@@ -1031,4 +1028,26 @@ I
 
 .custom-modal{
     border: 1px black solid;
+}
+
+.post-image-container {
+    max-width: 100%;
+}
+
+@media (min-width: 992px) {
+    .post-image-container {
+        max-width: 70%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .post-image-container {
+        max-width: 60%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .details-margin{
+        margin-top: 100px;
+    }
 }

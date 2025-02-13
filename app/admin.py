@@ -227,6 +227,29 @@ class GiftCardAdmin(admin.ModelAdmin):
             return []
         return super().get_inline_instances(request, obj)
 
+from django.contrib import admin
+from .models import Category, Tag, Post
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'created_at', 'status')
+    list_filter = ('status', 'created_at', 'category')
+    search_fields = ('title', 'content')
+    prepopulated_fields = {'slug': ('title',)}
+    date_hierarchy = 'created_at'
+    ordering = ('status', '-created_at')
+    filter_horizontal = ('tags',)
+
 # Optionally, you can also register these models individually
 admin.site.register(GiftCardCurrency)
 admin.site.register(GiftCardType)

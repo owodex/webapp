@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+<!-- Blog Detail Start -->
+<div class="container-xxl py-5">
+    <div class="container details-margin">
+        <div class="row g-5">
+            <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="mb-5">
+                    <div class="post-image-container">
+                        <img class="img-fluid rounded mb-5" src="{{ post.image.url }}" alt="{{ post.title }}">
+                    </div>
+                    <h1 class="mb-4">{{ post.title }}</h1>
+                    <div class="d-flex mb-3">
+                        <small class="me-3"><i class="far fa-user text-primary me-2"></i>{{ post.author }}</small>
+                        <small><i class="far fa-calendar text-primary me-2"></i>{{ post.created_at|date:"d M, Y" }}</small>
+                    </div>
+                    {{ post.content|safe }}
+                </div>
+
+
+                <!-- Related Posts -->
+                <div class="mb-5 mt-5">
+                    <h3 class="text-uppercase mb-4">Related Posts</h3>
+                    <div class="row g-4">
+                        {% for related_post in related_posts %}
+                        <div class="col-md-6">
+                            <div class="blog-item">
+                                <div class="position-relative overflow-hidden">
+                                    <img class="img-fluid" src="{{ related_post.image.url }}" alt="{{ related_post.title }}">
+                                </div>
+                                <div class="bg-light p-4">
+                                    <h5 class="mb-3">{{ related_post.title }}</h5>
+                                    <a class="text-primary" href="{% url 'blog_detail' related_post.slug %}">Read More<i class="fa fa-arrow-right ms-2"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Category List -->
+                <div class="mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                    <h4 class="text-uppercase mb-4">Categories</h4>
+                    <div class="d-flex flex-column justify-content-start bg-light p-4">
+                        {% for category in categories %}
+                        <a class="h6 mb-3" href="{% url 'blog_list' %}?category={{ category.slug }}"><i class="fa fa-angle-right me-2"></i>{{ category.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Recent Post -->
+                <div class="mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                    <h4 class="text-uppercase mb-4">Recent Post</h4>
+                    {% for recent_post in recent_posts %}
+                    <div class="d-flex mb-3">
+                        <img class="img-fluid" src="{{ recent_post.image.url }}" style="width: 100px; height: 100px; object-fit: cover;" alt="{{ recent_post.title }}">
+                        <div class="w-100 d-flex flex-column justify-content-center bg-light px-3" style="height: 100px;">
+                            <a class="h6 text-uppercase mb-1" href="{% url 'blog_detail' recent_post.slug %}">{{ recent_post.title }}</a>
+                            <small><i class="fa fa-calendar-alt me-2"></i>{{ recent_post.created_at|date:"d M, Y" }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- Blog Detail End -->
+{% endblock %}

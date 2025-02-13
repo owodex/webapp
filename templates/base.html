@@ -35,6 +35,7 @@
 
     <!-- Template Stylesheet -->
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'css/blog.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 
     {% block extra_css%}
@@ -67,6 +68,7 @@
                         <a href="{% url 'home' %}" class="nav-item nav-link active mx-lg-4">Home</a>
                         <a href="{% url 'products'%}" class="nav-item nav-link mx-lg-4">Products</a>
                         <a href="{% url 'rate_calculator' %}" class="nav-item nav-link mx-lg-4">Rate Calculator</a>
+                        <a href="{% url 'blog_list' %}" class="nav-item nav-link mx-lg-4">Blog</a>
                         <a href="{% url 'support' %}" class="nav-item nav-link mx-lg-4">Support</a>
                     </div>
                     <div class="d-flex">

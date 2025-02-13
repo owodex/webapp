@@ -24,6 +24,8 @@ from app.views import CustomPasswordResetView, CustomPasswordResetDoneView, Cust
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index, name = "home"),
+    path('blog/', blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', blog_detail, name='blog_detail'),
     path('products/', products, name = "products"),
     path('support', support, name = "support"),
     path('signup/', signup, name ='signup'),

@@ -37,6 +37,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from .vtpass_api import VTPassAPI, VTPassCableAPI
 from django.db import IntegrityError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from .models import Post, Category, Tag
 
 def verify_email(request, uidb64, token):
     try:
@@ -236,7 +238,11 @@ def signup(request):
 
 
 def index(request):
-    return render(request, 'index.html')
+    latest_posts = Post.objects.order_by('-created_at')[:3]
+    context = {
+        'latest_posts': latest_posts,
+    }
+    return render(request, 'index.html', context)
 
 def products(request):
     return render(request, 'service.html')
@@ -1119,7 +1125,7 @@ def vtpass_service_variations(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_cable_variations(request, provider):
-    url = f"https://sandbox.vtpass.com/api/service-variations?serviceID={provider}"
+    url = f"https://vtpass.com/api/service-variations?serviceID={provider}"
     auth = (settings.VTPASS_EMAIL, settings.VTPASS_PASSWORD)
     
     response = requests.get(url, auth=auth)
@@ -1318,3 +1324,36 @@ def get_g_rate(request):
 
     except Exception as e:
         return JsonResponse({'error': f'Internal server error: {str(e)}'}, status=500)
+
+
+def blog_list(request):
+    posts = Post.objects.all().order_by('-created_at')
+    paginator = Paginator(posts, 9)  # Show 9 posts per page
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    
+    context = {
+        'posts': posts,
+        'categories': Category.objects.all(),
+        'tags': Tag.objects.all(),
+    }
+    return render(request, 'blog_list.html', context)
+
+def blog_detail(request, slug):
+    post = get_object_or_404(Post, slug=slug)
+    related_posts = Post.objects.filter(category=post.category).exclude(id=post.id)[:2]
+    recent_posts = Post.objects.exclude(id=post.id).order_by('-created_at')[:3]
+    
+    context = {
+        'post': post,
+        'related_posts': related_posts,
+        'recent_posts': recent_posts,
+        'categories': Category.objects.all(),
+        'tags': Tag.objects.all(),
+    }
+    return render(request, 'blog_detail.html', context)

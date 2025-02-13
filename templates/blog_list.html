@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block maincontent %}
+<!-- Blog List Start -->
+<div class="container-xxl py-5">
+    <div class="container details-margin">
+        <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
+            <h5 class="section-title ff-secondary text-center text-primary fw-normal">Our Blog</h5>
+            <h1 class="mb-5">Latest Articles</h1>
+        </div>
+        <div class="row g-4">
+            {% for post in posts %}
+            <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="blog-item rounded overflow-hidden">
+                    <div class="position-relative overflow-hidden">
+                        <img class="img-fluid" src="{{ post.image.url }}" alt="{{ post.title }}">
+                        <p class="position-absolute top-0 start-0 bg-dark text-white rounded-end mt-5 py-2 px-4">{{ post.category }}</p>
+                    </div>
+                    <div class="p-4">
+                        <div class="d-flex mb-3">
+                            <small class="me-3"><i class="far fa-user text-primary me-2"></i>{{ post.author }}</small>
+                            <small><i class="far fa-calendar text-primary me-2"></i>{{ post.created_at|date:"d M, Y" }}</small>
+                        </div>
+                        <h4 class="mb-3"><a class="text-primary" href="{% url 'blog_detail' post.slug %}">{{ post.title }}</a></h4>
+                        <p>{{ post.content|truncatewords:25 }}</p>
+                        <a class="text-primary" href="{% url 'blog_detail' post.slug %}">Read More<i class="fa fa-arrow-right ms-2"></i></a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ posts.previous_page_number }}">Previous</a></li>
+                        {% endif %}
+
+                        {% for num in posts.paginator.page_range %}
+                            {% if posts.number == num %}
+                                <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% elif num > posts.number|add:'-3' and num < posts.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if posts.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ posts.next_page_number }}">Next</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ posts.paginator.num_pages }}">Last &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Blog List End -->
+{% endblock %}
