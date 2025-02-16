@@ -11,7 +11,7 @@ from requests.packages.urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 class VTPassAPI:
-    BASE_URL = 'https://vtpass.com/api/pay'
+    BASE_URL = 'https://sandbox.vtpass.com/api'
     
     def __init__(self):
         self.api_key = settings.VTPASS_API_KEY
@@ -105,7 +105,7 @@ class VTPassAPI:
 
 class VTPassCableAPI:
     def __init__(self):
-        self.base_url = "https://vtpass.com/api/pay"
+        self.base_url = "https://sandbox.vtpass.com/api"
         self.api_key = settings.VTPASS_API_KEY
         self.secret_key = settings.VTPASS_SECRET_KEY
         self.session = self._get_session()
@@ -165,14 +165,16 @@ class VTPassCableAPI:
         response = requests.get(url, headers=self.auth_header, params=params)
         return response.json()
 
-    def verify_smartcard(self, billers_code, service_id):
-        url = f"{self.base_url}/merchant-verify"
-        data = {
-            "billersCode": billers_code,
-            "serviceID": service_id
+    def verify_smartcard(self, billersCode, serviceID):
+        payload = {
+            "request_id": self.generate_request_id(),
+            "billersCode": billersCode,
+            "serviceID": serviceID,
         }
-        response = requests.post(url, headers=self.auth_header, json=data)
-        return response.json()
+        logger.debug(f"Verifying smart card: {payload}")
+        response = self.make_request('POST', 'merchant-verify', payload)
+        logger.debug(f"Smart card verification response: {response}")
+        return response
 
     def purchase_product(self, service_id, request_id, billers_code, variation_code, amount, phone, subscription_type):
         endpoint = 'pay'

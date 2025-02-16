@@ -1125,7 +1125,7 @@ def vtpass_service_variations(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_cable_variations(request, provider):
-    url = f"https://vtpass.com/api/service-variations?serviceID={provider}"
+    url = f"https://sandbox.vtpass.com/api/service-variations?serviceID={provider}"
     auth = (settings.VTPASS_EMAIL, settings.VTPASS_PASSWORD)
     
     response = requests.get(url, auth=auth)
@@ -1163,7 +1163,7 @@ def validate_smart_card(request):
             'renewal_amount': validation_result['content'].get('Renewal_Amount')
         })
     else:
-        error_message = validation_result.get('response_description') or 'Invalid smart card number'
+        error_message = validation_result.get('response_description')
         logger.error(f"Smart card validation failed: {error_message}")
         return JsonResponse({'status': 'error', 'message': error_message}, status=400)
     
