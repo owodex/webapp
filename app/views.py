@@ -1125,7 +1125,7 @@ def vtpass_service_variations(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 def get_cable_variations(request, provider):
-    url = f"https://sandbox.vtpass.com/api/service-variations?serviceID={provider}"
+    url = f"https://vtpass.com/api/service-variations?serviceID={provider}"
     auth = (settings.VTPASS_EMAIL, settings.VTPASS_PASSWORD)
     
     response = requests.get(url, auth=auth)

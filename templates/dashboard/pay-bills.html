@@ -204,7 +204,7 @@
         // Fetch variation codes when provider changes
         cableProvider.addEventListener('change', function() {
             const provider = this.value;
-            const url = `https://sandbox.vtpass.com/api/service-variations?serviceID=${provider}`;
+            const url = `https://vtpass.com/api/service-variations?serviceID=${provider}`;
 
             fetch(url, {
                 method: 'GET',
