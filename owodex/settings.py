@@ -154,6 +154,8 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Add these lines to your settings.py
 
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

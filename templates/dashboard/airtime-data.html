@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (selectedNetwork) {
             // Use the VTPass API to fetch data plans
-            fetch(`/api/vtpass/service-variations?serviceID=${selectedNetwork}-data`)
+            fetch(`https://vtpass.com/api/service-variations?serviceID=${selectedNetwork}-data`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.content && data.content.variations) {
