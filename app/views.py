@@ -725,18 +725,23 @@ def submit_data_request(request):
 
         logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}")
 
-
         # Initialize VTPass API
         vtpass_api = VTPassAPI()
 
         # Get variation details
         variations_response = vtpass_api.get_data_variation_codes(network)
-        variations = variations_response.get('content', {}).get('variations', [])
         
+        if not variations_response or 'content' not in variations_response:
+            return JsonResponse(variations_response or {'status': 'error', 'message': 'Failed to fetch variations'}, status=400)
+
+        variations = variations_response.get('content', {}).get('variations', [])
         logger.debug(f"Received variations from VTPass API: {variations}")
 
         # Find the exact matching variation
         selected_variation = next((v for v in variations if v['variation_code'] == data_plan), None)
+
+        if not selected_variation:
+            return JsonResponse({'status': 'error', 'message': 'Invalid data plan'}, status=400)
 
         variation_code = selected_variation['variation_code']
         amount = Decimal(selected_variation['variation_amount'])
@@ -746,13 +751,7 @@ def submit_data_request(request):
 
         # Check if user has sufficient balance
         if wallet.balance < amount:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Insufficient balance'
-            }, status=400)
-
-        # Generate a unique invoice ID
-        invoice_id = str(uuid.uuid4().hex)[:20]
+            return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
 
         # Make API call to VTPass
         api_response = vtpass_api.buy_data(phone, network, variation_code)
@@ -767,10 +766,11 @@ def submit_data_request(request):
                 # Create a new transaction
                 new_transaction = Transaction.objects.create(
                     user=request.user,
-                    service='data',
-                    invoice_id=api_response.get('requestId'),
+                    wallet=wallet,
                     amount=amount,
                     transaction_type='debit',
+                    service='data',
+                    invoice_id=api_response.get('requestId'),
                     status='completed'
                 )
 
@@ -782,24 +782,25 @@ def submit_data_request(request):
                     data_plan=selected_variation['name'],
                     amount=amount,
                 )
-
-            return JsonResponse({
+            response_data = {
                 'status': 'success',
-                'message': 'Data request submitted successfully',
-                'transaction_id': new_transaction.invoice_id,
-                'api_response': api_response
-            })
+                'message': api_response.get('message', 'Airtime purchase successful'),
+                'transaction_id': api_response.get('requestId'),
+                'vtpass_response': api_response
+            }
+            
+            # Return the exact response from VTPass
+            return JsonResponse(response_data)
         else:
-            # Failed transaction
-            return JsonResponse({
+            error_response = {
                 'status': 'error',
-                'api_response': api_response
-            }, status=400)
+                'message': api_response.get('message', 'Airtime purchase failed'),
+                'vtpass_response': api_response  # Include the full VTPass response for reference
+            }
+            # Failed transaction - return the exact error from VTPass
+            return JsonResponse(error_response, status=400)
 
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Invalid request method'
-    }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
     
 from django.core.serializers.json import DjangoJSONEncoder
 from phonenumber_field.phonenumber import PhoneNumber
