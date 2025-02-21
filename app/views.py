@@ -231,7 +231,6 @@ def signup(request):
 
                 return render(request, 'signup_success.html', {'email': user.email})
         else:
-            # Handle password mismatch error
             return render(request, 'signup.html', {'error': 'Passwords do not match'})
     return render(request, 'signup.html')
 
@@ -259,7 +258,7 @@ def user_login(request):
             user = authenticate(request, email=email, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('dashboard')  # Redirect to dashboard after successful login
+                return redirect('dashboard') 
             else:
                 messages.error(request, 'Invalid email or password.')
         else:
@@ -280,14 +279,12 @@ def terms(request):
 def privacy_policy(request):
     return render(request, "privacy_policy.html")
 
-from .models import Wallet  # Add this import at the top of the file if not already present
+from .models import Wallet  
 
 @login_required
 def dashboard(request):
-    # Get the 5 most recent transactions for the current user
     recent_transactions = Transaction.objects.filter(user=request.user).order_by('-date')[:5]
 
-    # Get or create the user's wallet
     wallet, created = Wallet.objects.get_or_create(user=request.user)
 
     context = {
@@ -304,7 +301,7 @@ def services(request):
 @login_required
 def transactions(request):
     transactions_list = Transaction.objects.filter(user=request.user)
-    paginator = Paginator(transactions_list, 20)  # Show 10 transactions per page
+    paginator = Paginator(transactions_list, 20) 
 
     page_number = request.GET.get('page')
     transactions = paginator.get_page(page_number)
@@ -332,20 +329,14 @@ def pay_bills(request):
 def bonus(request):
     user = request.user
     
-    # Get signup bonus
     signup_bonus = Transaction.objects.filter(user=user, service='Signup Bonus').first()
     
-    # Get referral bonuses
     referral_bonuses = Transaction.objects.filter(user=user, service='Referral Bonus').order_by('-date')
     
-    # Calculate total bonus
     total_bonus = user.bonus_amount
-    
-    # Calculate total referral bonus
+
     total_referral_bonus = referral_bonuses.aggregate(Sum('amount'))['amount__sum'] or 0
 
-    
-    # Check if user is eligible for withdrawal
     total_giftcard_transactions = GiftCardTransaction.objects.filter(user=request.user).aggregate(Sum('amount'))['amount__sum'] or 0
     user_eligible = total_giftcard_transactions >= 100000
 
@@ -380,17 +371,15 @@ def withdraw_bonus(request):
         logger.warning(f"User {user.id} - Withdrawal attempt failed: {error_message}")
         return JsonResponse({'success': False, 'error': error_message})
 
-    # If we reach here, the user is eligible for withdrawal
     with transaction.atomic():
         wallet, created = Wallet.objects.get_or_create(user=user)
         wallet.balance += total_bonus
         wallet.save()
 
-        # Reset user's bonus amount
         user.bonus_amount = 0
         user.save()
 
-        # Create a transaction record for the bonus withdrawal
+
         Transaction.objects.create(
             user=user,
             service='Bonus Withdrawal',
@@ -736,6 +725,7 @@ def submit_data_request(request):
 
         logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}")
 
+
         # Initialize VTPass API
         vtpass_api = VTPassAPI()
 
@@ -747,20 +737,6 @@ def submit_data_request(request):
 
         # Find the exact matching variation
         selected_variation = next((v for v in variations if v['variation_code'] == data_plan), None)
-
-        if not selected_variation:
-            available_plans = ", ".join([f"{v['name']} ({v['variation_code']})" for v in variations])
-            logger.error(f"No matching plan found. Available plans: {available_plans}")
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Invalid data plan. Available plans are: {available_plans}',
-                'debug_info': {
-                    'received_plan': data_plan,
-                    'available_plans': [v['variation_code'] for v in variations]
-                }
-            }, status=400)
-
-        logger.debug(f"Selected variation: {selected_variation}")
 
         variation_code = selected_variation['variation_code']
         amount = Decimal(selected_variation['variation_amount'])
@@ -817,7 +793,6 @@ def submit_data_request(request):
             # Failed transaction
             return JsonResponse({
                 'status': 'error',
-                'message': 'Data purchase failed: ' + api_response.get('response_description', 'Unknown error'),
                 'api_response': api_response
             }, status=400)
 
@@ -885,10 +860,8 @@ def submit_cable_request(request):
                 subscription_type='change'
             )
 
-       # Log the API response for debugging
         logger.debug(f"VTPass API Response: {response}")
 
-        # Check if response is a string (error message) or a dictionary
         if isinstance(response, str):
             raise ValueError(f'Cable subscription failed: {response}')
 
@@ -911,7 +884,7 @@ def submit_cable_request(request):
                     return JsonResponse({
                         'status': 'success',
                         'message': 'Cable subscription successful',
-                        'transaction_id': new_transaction.invoice_id  # Make sure this field exists
+                        'transaction_id': new_transaction.invoice_id 
                     })
 
                 CableRequest.objects.create(
@@ -943,7 +916,6 @@ def submit_electricity_request(request):
         amount = request.POST.get('amount')
         phone = request.user.phone_number
 
-        # Generate a unique invoice ID
         invoice_id = str(uuid.uuid4().hex)[:20]
 
         if not all([meter_number, operator, plan, account_name, amount]):
@@ -1028,7 +1000,6 @@ def trade_giftcard(request, giftcard_id):
         amount = request.POST.get('amount')
         images = request.FILES.getlist('giftCardImages')
 
-        # Convert amount to Decimal
         try:
             amount = Decimal(amount)
         except InvalidOperation:
@@ -1037,10 +1008,8 @@ def trade_giftcard(request, giftcard_id):
                 'form_data': request.POST
             })
 
-        # Generate a unique invoice ID
         invoice_id = str(uuid.uuid4().hex)[:20]
 
-        # Create a new Transaction
         transaction = Transaction.objects.create(
             user=request.user,
             amount=amount,
@@ -1050,7 +1019,6 @@ def trade_giftcard(request, giftcard_id):
             invoice_id=invoice_id
         )
 
-        # Create a new GiftCardTransaction
         giftcard_transaction = GiftCardTransaction.objects.create(
             user=request.user,
             transaction=transaction,
@@ -1061,14 +1029,11 @@ def trade_giftcard(request, giftcard_id):
             amount=amount
         )
 
-        # Save the uploaded images
         for image in images:
             GiftCardImage.objects.create(
                 transaction=giftcard_transaction,
                 image=image
             )
-
-        # Redirect to the giftcards view with a success message
         messages.success(request, 'Gift card trade request submitted successfully!')
         return redirect('giftcards')
 
@@ -1081,9 +1046,9 @@ def search(request):
         service_urls = {
             'airtime': reverse('airtime_data'),
             'data': reverse('airtime_data'),
-            'cable': reverse('pay_bills'),  # Assuming this is the URL for cable bills
-            'tv': reverse('pay_bills'),     # Another term for cable
-            'electricity': reverse('pay_bills'),  # Assuming this is the URL for electricity bills
+            'cable': reverse('pay_bills'), 
+            'tv': reverse('pay_bills'),    
+            'electricity': reverse('pay_bills'),  
             'giftcard': reverse('giftcards'),
             'gift card': reverse('giftcards'),
             'transfer': reverse('bank_transfer'),
@@ -1094,12 +1059,10 @@ def search(request):
             'reward': reverse('bonus'),
         }
 
-        # Check if the query matches any of our defined services
         for key, url in service_urls.items():
             if key in query:
                 return redirect(url)
 
-        # If no match is found, redirect to a general search results page or show an error
         return render(request, 'dashboard/services.html', {'query': query})
 
     return redirect('dashboard')
@@ -1180,7 +1143,6 @@ def verify_meter(request):
     vtpass_api = VTPassAPI()
     response = vtpass_api.verify_meter(operator, meter_number, meter_type)
 
-    # Log the entire response for debugging
     logger.debug(f"VTPass API Response: {response}")
 
     if response.get('code') == '000':
@@ -1189,14 +1151,14 @@ def verify_meter(request):
             'account_name': content.get('Customer_Name') or content.get('customerName') or 'N/A',
             'address': content.get('Address') or content.get('customerAddress') or 'N/A',
             'meter_number': content.get('Meter_Number') or content.get('meterNumber') or meter_number,
-            'customer_details': content  # Include all customer details for frontend use
+            'customer_details': content  
         })
     else:
         error_message = response.get('response_description') or 'Verification failed'
         logger.error(f"Meter verification failed: {error_message}")
         return JsonResponse({
             'error': error_message,
-            'details': response  # Include full response for debugging
+            'details': response  
         }, status=400)
 
 @login_required
@@ -1218,15 +1180,12 @@ def get_rate(request):
     denomination_value = request.GET.get('denomination')
 
     try:
-        # Get the GiftCard instance
         giftcard = GiftCard.objects.get(name=giftcard_name)
 
-        # Get the related instances
         currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency_code)
         card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
         denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
 
-        # Get the rate
         rate = GiftCardRate.objects.get(
             giftcard=giftcard,
             currency=currency,
@@ -1250,7 +1209,7 @@ def get_rate(request):
     
 def get_gift_cards(request):
     """Fetches all available gift cards."""
-    gift_cards = GiftCard.objects.values('id', 'name')  # Adjust field names if necessary
+    gift_cards = GiftCard.objects.values('id', 'name')  
     return JsonResponse(list(gift_cards), safe=False)
 
 def get_currencies(request):
@@ -1271,10 +1230,10 @@ def get_denominations(request):
 @require_GET
 def get_g_rate(request):
     giftcard_name = request.GET.get('giftcard')
-    currency_name = request.GET.get('currency')  # Use currency_name now
+    currency_name = request.GET.get('currency') 
     card_type_name = request.GET.get('type')
     denomination_value = request.GET.get('denomination')
-    amount = request.GET.get('amount', 1)  # Default to 1
+    amount = request.GET.get('amount', 1) 
 
     if not all([giftcard_name, currency_name, card_type_name, denomination_value]):
         return JsonResponse({'error': 'Missing required parameters'}, status=400)
@@ -1299,7 +1258,7 @@ def get_g_rate(request):
             'rate': rate,
             'total_value': total_value,
             'giftcard': giftcard.name,
-            'currency': currency.currency_name,  # Return currency_name
+            'currency': currency.currency_name, 
             'type': card_type.type,
             'denomination': denomination.value
         })
@@ -1328,7 +1287,7 @@ def get_g_rate(request):
 
 def blog_list(request):
     posts = Post.objects.all().order_by('-created_at')
-    paginator = Paginator(posts, 9)  # Show 9 posts per page
+    paginator = Paginator(posts, 9) 
     page = request.GET.get('page')
     try:
         posts = paginator.page(page)
