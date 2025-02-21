@@ -43,15 +43,15 @@
             <i class="fas fa-sun"></i>
         </button>
     </div>
-    <div class="container">
-        <div class="row mt-5">
-            <!-- Left column for photo -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left column for the image (only visible on lg and above) -->
             <div class="col-lg-6 d-none d-lg-block bg-signup-image">
-                <!-- You can replace this with your own image -->
-                <img src="https://flipex-files.nyc3.digitaloceanspaces.com/assets/signup_image_2.png" alt="Sign Up" class="img-fluid h-100 object-fit-cover">
+                <img src="{% static 'img/owodex signup (1).png' %}" alt="Sign Up" class="img-fluid">
             </div>
-            <!-- Right column for form -->
-            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+
+            <!-- Right column for the form -->
+            <div class="col-lg-6 form-container mt-5">
                 <div class="card w-100 custom-card">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
@@ -60,43 +60,43 @@
                             </a>
                         </div>
                         <h2 class="card-title text-center mb-4">Welcome to Owodex</h2>
-                        <form method = "post" id="signupForm">
+                        <form method="post" id="signupForm">
                             {% csrf_token %}
                             {% if error %}
                                 <div class="alert alert-danger">{{ error }}</div>
                             {% endif %}
 
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="name" class="form-label">Full Name</label>
                                 <input type="text" class="form-control form-control-lg" id="name" name="name" placeholder="Enter your full name" required>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="username" class="form-label">Username</label>
                                 <input type="text" class="form-control form-control-lg" id="username" name="username" placeholder="Choose a username" required>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="email" class="form-label">Email Address</label>
                                 <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="Enter your email address" required>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="phone" class="form-label">Phone Number</label>
                                 <div class="input-group input-group-lg">
                                     <input type="tel" id="phone" name="phone_number" class="form-control form-control-lg" required>
                                 </div>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="password" class="form-label">Password</label>
                                 <input type="password" class="form-control form-control-lg" id="password" name="password" placeholder="Enter your password" required>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="confirm_password" class="form-label">Confirm Password</label>
                                 <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" placeholder="Enter your password again" required>
                             </div>
-                            <div class="mb-5">
+                            <div class="mb-4">
                                 <label for="referral_code" class="form-label">Referral Code</label>
                                 <input type="text" class="form-control form-control-lg" name="referral_code" id="referral_code" placeholder="Referral Code (optional)">
                             </div>
-                            <div class="mb-5 form-check">
+                            <div class="mb-4 form-check">
                                 <input type="checkbox" class="form-check-input" id="terms" required>
                                 <label class="form-check-label" for="terms">I accept the <a href="{% url 'terms' %}">Terms and Conditions</a></label>
                             </div>
@@ -108,6 +108,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 

@@ -11,7 +11,7 @@ from requests.packages.urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 class VTPassAPI:
-    BASE_URL = 'https://vtpass.com/api'
+    BASE_URL = 'https://sandbox.vtpass.com/api'
     
     def __init__(self):
         self.api_key = settings.VTPASS_API_KEY
@@ -105,7 +105,7 @@ class VTPassAPI:
 
 class VTPassCableAPI:
     def __init__(self):
-        self.base_url = "https://vtpass.com/api"
+        self.base_url = "https://sandbox.vtpass.com/api"
         self.api_key = settings.VTPASS_API_KEY
         self.secret_key = settings.VTPASS_SECRET_KEY
         self.session = self._get_session()
