@@ -1,4 +1,18 @@
 /* Dashboard specific styles */
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
 .navbar-dark {
     background-color: #0F172B;
 }
