@@ -393,7 +393,7 @@
                             <small><i class="far fa-calendar text-primary me-2"></i>{{ post.created_at|date:"d M, Y" }}</small>
                         </div>
                         <h5 class="mb-3">{{ post.title }}</h5>
-                        <p>{{ post.content|truncatewords:20 }}</p>
+                        <p>{{ post.content|truncatewords:20|striptags }}</p>
                         <a class="btn btn-primary py-2 px-4" href="{% url 'blog_detail' post.slug %}">Read More</a>
                     </div>
                 </div>
