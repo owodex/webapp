@@ -65,10 +65,10 @@
                         <label for="airtimeNetwork" class="form-label">Select Network</label>
                         <select class="form-select form-select-lg" id="airtimeNetwork" name="network" required>
                             <option value="">Choose network</option>
-                            <option value="mtn">MTN</option>
-                            <option value="airtel">Airtel</option>
-                            <option value="glo">Glo</option>
-                            <option value="etisalat">9mobile</option>
+                            <option value="MTN">MTN</option>
+                            <option value="AIRTEL">Airtel</option>
+                            <option value="GLO">Glo</option>
+                            <option value="9MOBILE">9mobile</option>
                         </select>
                     </div>
                     <div class="mb-4">
@@ -95,10 +95,10 @@
                         <label for="dataNetwork" class="form-label">Select Network</label>
                         <select class="form-select form-select-lg" id="dataNetwork" name="network" required>
                             <option value="">Choose network</option>
-                            <option value="mtn">MTN</option>
-                            <option value="airtel">Airtel</option>
-                            <option value="glo">Glo</option>
-                            <option value="etisalat">9mobile</option>
+                            <option value="MTN">MTN</option>
+                            <option value="AIRTEL">Airtel</option>
+                            <option value="GLO">Glo</option>
+                            <option value="9MOBILE">9mobile</option>
                         </select>
                     </div>
                     <div class="mb-4">
@@ -127,121 +127,126 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const airtimeBtn = document.getElementById('airtimeBtn');
-    const dataBtn = document.getElementById('dataBtn');
-    const airtimeSection = document.getElementById('airtimeSection');
-    const dataSection = document.getElementById('dataSection');
-    const dataNetwork = document.getElementById('dataNetwork');
-    const dataPlan = document.getElementById('dataPlan');
-    const dataAmount = document.getElementById('dataAmount');
+    document.addEventListener('DOMContentLoaded', function() {
+        const airtimeBtn = document.getElementById('airtimeBtn');
+        const dataBtn = document.getElementById('dataBtn');
+        const airtimeSection = document.getElementById('airtimeSection');
+        const dataSection = document.getElementById('dataSection');
+        const dataNetwork = document.getElementById('dataNetwork');
+        const dataPlan = document.getElementById('dataPlan');
+        const dataAmount = document.getElementById('dataAmount');
+    
+        // Toggle between airtime and data sections
+        airtimeBtn.addEventListener('click', function() {
+            airtimeSection.style.display = 'block';
+            dataSection.style.display = 'none';
+            airtimeBtn.classList.replace('btn-secondary', 'btn-primary');
+            dataBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+    
+        dataBtn.addEventListener('click', function() {
+            airtimeSection.style.display = 'none';
+            dataSection.style.display = 'block';
+            dataBtn.classList.replace('btn-secondary', 'btn-primary');
+            airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+    
+        // Populate data plans when network is selected
+        dataNetwork.addEventListener('change', function() {
+            const selectedNetwork = this.value;
+            dataPlan.innerHTML = '<option value="">Choose data plan</option>';
+            dataAmount.value = '';
 
-    // Toggle between airtime and data sections
-    airtimeBtn.addEventListener('click', function() {
-        airtimeSection.style.display = 'block';
-        dataSection.style.display = 'none';
-        airtimeBtn.classList.replace('btn-secondary', 'btn-primary');
-        dataBtn.classList.replace('btn-primary', 'btn-secondary');
-    });
-
-    dataBtn.addEventListener('click', function() {
-        airtimeSection.style.display = 'none';
-        dataSection.style.display = 'block';
-        dataBtn.classList.replace('btn-secondary', 'btn-primary');
-        airtimeBtn.classList.replace('btn-primary', 'btn-secondary');
-    });
-
-    // Populate data plans when network is selected
-    dataNetwork.addEventListener('change', function() {
-        const selectedNetwork = this.value;
-        dataPlan.innerHTML = '<option value="">Choose data plan</option>';
-        dataAmount.value = '';
-
-        if (selectedNetwork) {
-            // Use the VTPass API to fetch data plans
-            fetch(`https://sandbox.vtpass.com/api/service-variations?serviceID=${selectedNetwork}-data`)
+            if (selectedNetwork) {
+                // Use the updated endpoint to fetch data plans
+                fetch(`/get-data-plans?network=${selectedNetwork}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.content && data.content.variations) {
-                        data.content.variations.forEach(plan => {
+                    if (data.status === 'success' && data.data) {
+                        data.data.forEach(plan => {
                             const option = document.createElement('option');
-                            option.value = plan.variation_code;
-                            option.textContent = `${plan.name} - ₦${plan.variation_amount}`;
-                            option.dataset.price = plan.variation_amount;
+                            option.value = plan.plan_code;
+                            option.textContent = `${plan.bundle_value} - ${plan.bundle_validity} - ₦${plan.bundle_price}`;
+                            option.dataset.price = plan.bundle_price;
                             dataPlan.appendChild(option);
                         });
                     } else {
-                        console.error('Unexpected API response structure:', data);
+                        console.error('Error fetching data plans:', data.message);
                     }
                 })
                 .catch(error => console.error('Error fetching data plans:', error));
-        }
-    });
-
-    // Update amount when data plan is selected
-    dataPlan.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        if (selectedOption.dataset.price) {
-            dataAmount.value = selectedOption.dataset.price;
-        } else {
-            dataAmount.value = '';
-        }
-    });
-
-    // Handle form submissions
-    const airtimeForm = document.getElementById('airtimeForm');
-    airtimeForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        fetch('{% url "submit_airtime_request" %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Airtime request submitted successfully. Transaction ID: ' + data.transaction_id);
-                airtimeForm.reset();
+        });
+    
+        // Update amount when data plan is selected
+        dataPlan.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.dataset.price) {
+                dataAmount.value = selectedOption.dataset.price;
             } else {
-                alert('Error: ' + data.message);
+                dataAmount.value = '';
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+        });
+    
+        // Handle form submissions
+        const airtimeForm = document.getElementById('airtimeForm');
+        airtimeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+        
+            fetch('/api/purchase-airtime/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Airtime purchase successful. Transaction ID: ' + data.transaction_id);
+                    airtimeForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    
+        const dataForm = document.getElementById('dataForm');
+        dataForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+        
+            fetch('/api/purchase-data/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Data purchase successful. Transaction ID: ' + data.transaction_id);
+                    dataForm.reset();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            });
         });
     });
-
-    const dataForm = document.getElementById('dataForm');
-    dataForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        fetch('{% url "submit_data_request" %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Data request submitted successfully. Transaction ID: ' + data.transaction_id);
-                dataForm.reset();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
-    });
-});
 </script>
 {% endblock %}

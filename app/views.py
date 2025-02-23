@@ -39,6 +39,9 @@ from .vtpass_api import VTPassAPI, VTPassCableAPI
 from django.db import IntegrityError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import Post, Category, Tag
+from .squad_api import SquadcoAPI
+
+logger = logging.getLogger(__name__)
 
 def verify_email(request, uidb64, token):
     try:
@@ -617,7 +620,195 @@ def get_beneficiaries(request):
 #         'message': 'Invalid request method'
 #     }, status=400)
 
+# @login_required
+# def submit_airtime_request(request):
+#     if request.method == 'POST':
+#         phone = request.POST.get('phone')
+#         network = request.POST.get('network')
+#         amount = request.POST.get('amount')
+
+#         try:
+#             amount = Decimal(amount)
+#         except InvalidOperation:
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': 'Invalid amount'
+#             }, status=400)
+
+#         # Get or create user's wallet
+#         wallet, _ = Wallet.objects.get_or_create(user=request.user)
+
+#         # Check if user has sufficient balance
+#         if wallet.balance < amount:
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': 'Insufficient balance'
+#             }, status=400)
+
+#         # Deduct amount from wallet
+#         wallet.balance -= amount
+#         wallet.save()
+
+#         # Generate a unique invoice ID
+#         while True:
+#             invoice_id = f'AIR{uuid.uuid4().hex[:16].upper()}'
+#             if not Transaction.objects.filter(invoice_id=invoice_id).exists():
+#                 break
+
+
+#         # Make API call to VTPass
+#         vtpass_api = VTPassAPI()
+#         api_response = vtpass_api.buy_airtime(phone, str(amount), network)
+
+#         try:
+#             # Create a new transaction
+#             new_transaction = Transaction.objects.create(
+#                 user=request.user,
+#                 service='airtime',
+#                 amount=amount,
+#                 transaction_type='debit',
+#                 status='pending',
+#                 invoice_id=api_response.get('requestId')
+#             )
+#         except IntegrityError:
+#             # If there's still an IntegrityError, refund the user and return error response
+#             wallet.balance += amount
+#             wallet.save()
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': 'Failed to create transaction. Please try again.'
+#             }, status=500)
+
+#         if api_response.get('code') == '000':
+#             # Successful transaction
+#             new_transaction.status = 'completed'  # Change this from 'success' to 'completed'
+#             new_transaction.save()
+
+#             # Create a new airtime request
+#             AirtimeRequest.objects.create(
+#                 transaction=new_transaction,
+#                 phone=phone,
+#                 network=network
+#             )
+
+#             return JsonResponse({
+#                 'status': 'success',
+#                 'message': 'Airtime request submitted successfully',
+#                 'transaction_id': new_transaction.invoice_id,
+#                 'api_response': api_response
+#             })
+#         else:
+#             # Failed transaction
+#             new_transaction.status = 'failed'
+#             new_transaction.save()
+
+#             # Refund the user
+#             wallet.balance += amount
+#             wallet.save()
+
+#             return JsonResponse({
+#                 'status': 'error',
+#                 'message': 'Airtime purchase failed: ' + api_response.get('response_description', 'Unknown error'),
+#                 'api_response': api_response
+#             }, status=400)
+
+#     return JsonResponse({
+#         'status': 'error',
+#         'message': 'Invalid request method'
+#     }, status=400)
+
+# @login_required
+# @require_POST
+# @transaction.atomic
+# def submit_data_request(request):
+#     if request.method == 'POST':
+#         phone = request.POST.get('phone')
+#         network = request.POST.get('network')
+#         data_plan = request.POST.get('data_plan')
+
+#         logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}")
+
+#         # Initialize VTPass API
+#         vtpass_api = VTPassAPI()
+
+#         # Get variation details
+#         variations_response = vtpass_api.get_data_variation_codes(network)
+        
+#         if not variations_response or 'content' not in variations_response:
+#             return JsonResponse(variations_response or {'status': 'error', 'message': 'Failed to fetch variations'}, status=400)
+
+#         variations = variations_response.get('content', {}).get('variations', [])
+#         logger.debug(f"Received variations from VTPass API: {variations}")
+
+#         # Find the exact matching variation
+#         selected_variation = next((v for v in variations if v['variation_code'] == data_plan), None)
+
+#         if not selected_variation:
+#             return JsonResponse({'status': 'error', 'message': 'Invalid data plan'}, status=400)
+
+#         variation_code = selected_variation['variation_code']
+#         amount = Decimal(selected_variation['variation_amount'])
+
+#         # Get or create user's wallet
+#         wallet, _ = Wallet.objects.get_or_create(user=request.user)
+
+#         # Check if user has sufficient balance
+#         if wallet.balance < amount:
+#             return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
+
+#         # Make API call to VTPass
+#         api_response = vtpass_api.buy_data(phone, network, variation_code)
+
+#         if api_response.get('code') == '000':
+#             # Successful transaction
+#             with transaction.atomic():
+#                 # Deduct amount from wallet
+#                 wallet.balance -= amount
+#                 wallet.save()
+
+#                 # Create a new transaction
+#                 new_transaction = Transaction.objects.create(
+#                     user=request.user,
+#                     wallet=wallet,
+#                     amount=amount,
+#                     transaction_type='debit',
+#                     service='data',
+#                     invoice_id=api_response.get('requestId'),
+#                     status='completed'
+#                 )
+
+#                 # Create a new data request
+#                 DataRequest.objects.create(
+#                     transaction=new_transaction,
+#                     phone=phone,
+#                     network=network,
+#                     data_plan=selected_variation['name'],
+#                     amount=amount,
+#                 )
+#             response_data = {
+#                 'status': 'success',
+#                 'message': api_response.get('message', 'Airtime purchase successful'),
+#                 'transaction_id': api_response.get('requestId'),
+#                 'vtpass_response': api_response
+#             }
+            
+#             # Return the exact response from VTPass
+#             return JsonResponse(response_data)
+#         else:
+#             error_response = {
+#                 'status': 'error',
+#                 'message': api_response.get('message', 'Airtime purchase failed'),
+#                 'vtpass_response': api_response  # Include the full VTPass response for reference
+#             }
+#             # Failed transaction - return the exact error from VTPass
+#             return JsonResponse(error_response, status=400)
+
+#     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+
 @login_required
+@require_POST
+@transaction.atomic
 def submit_airtime_request(request):
     if request.method == 'POST':
         phone = request.POST.get('phone')
@@ -632,6 +823,13 @@ def submit_airtime_request(request):
                 'message': 'Invalid amount'
             }, status=400)
 
+        # Check if amount is greater than 50
+        if amount <= 50:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Airtime amount must be greater than 50'
+            }, status=400)
+
         # Get or create user's wallet
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
 
@@ -642,121 +840,14 @@ def submit_airtime_request(request):
                 'message': 'Insufficient balance'
             }, status=400)
 
-        # Deduct amount from wallet
-        wallet.balance -= amount
-        wallet.save()
-
         # Generate a unique invoice ID
-        while True:
-            invoice_id = f'AIR{uuid.uuid4().hex[:16].upper()}'
-            if not Transaction.objects.filter(invoice_id=invoice_id).exists():
-                break
+        invoice_id = f'AIR{uuid.uuid4().hex[:16].upper()}'
 
+        # Make API call to Squadco
+        squadco_api = SquadcoAPI()
+        api_response = squadco_api.buy_airtime(phone, int(amount))
 
-        # Make API call to VTPass
-        vtpass_api = VTPassAPI()
-        api_response = vtpass_api.buy_airtime(phone, str(amount), network)
-
-        try:
-            # Create a new transaction
-            new_transaction = Transaction.objects.create(
-                user=request.user,
-                service='airtime',
-                amount=amount,
-                transaction_type='debit',
-                status='pending',
-                invoice_id=api_response.get('requestId')
-            )
-        except IntegrityError:
-            # If there's still an IntegrityError, refund the user and return error response
-            wallet.balance += amount
-            wallet.save()
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Failed to create transaction. Please try again.'
-            }, status=500)
-
-        if api_response.get('code') == '000':
-            # Successful transaction
-            new_transaction.status = 'completed'  # Change this from 'success' to 'completed'
-            new_transaction.save()
-
-            # Create a new airtime request
-            AirtimeRequest.objects.create(
-                transaction=new_transaction,
-                phone=phone,
-                network=network
-            )
-
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Airtime request submitted successfully',
-                'transaction_id': new_transaction.invoice_id,
-                'api_response': api_response
-            })
-        else:
-            # Failed transaction
-            new_transaction.status = 'failed'
-            new_transaction.save()
-
-            # Refund the user
-            wallet.balance += amount
-            wallet.save()
-
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Airtime purchase failed: ' + api_response.get('response_description', 'Unknown error'),
-                'api_response': api_response
-            }, status=400)
-
-    return JsonResponse({
-        'status': 'error',
-        'message': 'Invalid request method'
-    }, status=400)
-
-@login_required
-@require_POST
-@transaction.atomic
-def submit_data_request(request):
-    if request.method == 'POST':
-        phone = request.POST.get('phone')
-        network = request.POST.get('network')
-        data_plan = request.POST.get('data_plan')
-
-        logger.debug(f"Received request: phone={phone}, network={network}, data_plan={data_plan}")
-
-        # Initialize VTPass API
-        vtpass_api = VTPassAPI()
-
-        # Get variation details
-        variations_response = vtpass_api.get_data_variation_codes(network)
-        
-        if not variations_response or 'content' not in variations_response:
-            return JsonResponse(variations_response or {'status': 'error', 'message': 'Failed to fetch variations'}, status=400)
-
-        variations = variations_response.get('content', {}).get('variations', [])
-        logger.debug(f"Received variations from VTPass API: {variations}")
-
-        # Find the exact matching variation
-        selected_variation = next((v for v in variations if v['variation_code'] == data_plan), None)
-
-        if not selected_variation:
-            return JsonResponse({'status': 'error', 'message': 'Invalid data plan'}, status=400)
-
-        variation_code = selected_variation['variation_code']
-        amount = Decimal(selected_variation['variation_amount'])
-
-        # Get or create user's wallet
-        wallet, _ = Wallet.objects.get_or_create(user=request.user)
-
-        # Check if user has sufficient balance
-        if wallet.balance < amount:
-            return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
-
-        # Make API call to VTPass
-        api_response = vtpass_api.buy_data(phone, network, variation_code)
-
-        if api_response.get('code') == '000':
+        if api_response.get('success'):
             # Successful transaction
             with transaction.atomic():
                 # Deduct amount from wallet
@@ -766,50 +857,187 @@ def submit_data_request(request):
                 # Create a new transaction
                 new_transaction = Transaction.objects.create(
                     user=request.user,
+                    service='airtime',
+                    invoice_id=invoice_id,
+                    amount=amount,
+                    transaction_type='debit',
+                    status='completed'
+                )
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Airtime purchase successful',
+                'transaction_id': invoice_id,
+                'squadco_response': api_response
+            })
+        else:
+            # Failed transaction
+            error_message = api_response.get('message', 'Unknown error')
+            return JsonResponse({
+                'status': 'error',
+                'message': f"Airtime purchase failed: {error_message}",
+                'squadco_response': api_response
+            }, status=400)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=400)
+
+@login_required
+@require_POST
+def submit_data_request(request):
+    try:
+        phone_number = request.POST.get('phone')
+        network = request.POST.get('network')
+        plan_code = request.POST.get('data_plan')
+        amount = request.POST.get('amount')
+
+        if not all([phone_number, network, plan_code, amount]):
+            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
+
+        try:
+            amount = Decimal(amount)
+        except InvalidOperation:
+            return JsonResponse({'status': 'error', 'message': 'Invalid amount'}, status=400)
+
+        # Fetch plan details
+        data_plans_response = get_data_plans(request)
+        data_plans_data = json.loads(data_plans_response.content)
+        
+        if data_plans_data['status'] == 'success':
+            data_plans = data_plans_data['data']
+            selected_plan = next((plan for plan in data_plans if plan['plan_code'] == plan_code), None)
+
+            if not selected_plan:
+                return JsonResponse({'status': 'error', 'message': 'Invalid data plan'}, status=400)
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Failed to fetch data plans'}, status=400)
+
+        wallet = Wallet.objects.get(user=request.user)
+
+        if wallet.balance < amount:
+            return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
+
+        # Make API call to Squadco
+        url = "https://sandbox-api-d.squadco.com/vending/purchase/data"
+        headers = {
+            "Authorization": f"Bearer {settings.SQUADCO_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "phone_number": phone_number,
+            "amount": int(amount),
+            "plan_code": plan_code
+        }
+
+        response = requests.post(url, json=payload, headers=headers)
+        api_response = response.json()
+
+        if api_response.get('success'):
+            with transaction.atomic():
+                wallet.balance -= amount
+                wallet.save()
+
+                new_transaction = Transaction.objects.create(
+                    user=request.user,
                     wallet=wallet,
                     amount=amount,
                     transaction_type='debit',
                     service='data',
-                    invoice_id=api_response.get('requestId'),
+                    invoice_id=api_response['data'].get('reference'),
                     status='completed'
                 )
 
-                # Create a new data request
                 DataRequest.objects.create(
                     transaction=new_transaction,
-                    phone=phone,
+                    phone=phone_number,
                     network=network,
-                    data_plan=selected_variation['name'],
-                    amount=amount,
+                    data_plan=selected_plan['bundle_value'],
+                    amount=amount
                 )
-            response_data = {
+
+            return JsonResponse({
                 'status': 'success',
-                'message': api_response.get('message', 'Airtime purchase successful'),
-                'transaction_id': api_response.get('requestId'),
-                'vtpass_response': api_response
-            }
-            
-            # Return the exact response from VTPass
-            return JsonResponse(response_data)
+                'message': 'Data purchase successful',
+                'transaction_id': new_transaction.invoice_id
+            })
         else:
-            error_response = {
+            return JsonResponse({
                 'status': 'error',
-                'message': api_response.get('message', 'Airtime purchase failed'),
-                'vtpass_response': api_response  # Include the full VTPass response for reference
-            }
-            # Failed transaction - return the exact error from VTPass
-            return JsonResponse(error_response, status=400)
+                'message': 'Data purchase failed: ' + api_response.get('message', 'Unknown error')
+            }, status=400)
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    except Exception as e:
+        logger.error(f"Error in submit_data_request: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An unexpected error occurred'
+        }, status=500)
+
+import logging
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+import requests
+from django.conf import settings
+from django.views.decorators.http import require_http_methods
+
+logger = logging.getLogger(__name__)
+
+class SquadcoAPI:
+    BASE_URL = "https://sandbox-api-d.squadco.com"
     
-from django.core.serializers.json import DjangoJSONEncoder
-from phonenumber_field.phonenumber import PhoneNumber
+    def __init__(self):
+        self.headers = {
+            "Authorization": f"Bearer {settings.SQUADCO_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
 
-class PhoneNumberEncoder(DjangoJSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, PhoneNumber):
-            return str(obj)
-        return super().default(obj)
+    def get_data_bundles(self, network):
+        url = f"{self.BASE_URL}/vending/data-bundles"
+        params = {"network": network}
+        
+        try:
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error fetching data bundles from Squadco: {str(e)}")
+            return {"status": "error", "message": "Failed to fetch data bundles"}
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def get_data_plans(request):
+    try:
+        if request.method == 'GET':
+            network = request.GET.get('network')
+        else:  # POST
+            network = request.POST.get('network')
+
+        if not network:
+            logger.error("Network parameter is missing")
+            return JsonResponse({'status': 'error', 'message': 'Network parameter is required'}, status=400)
+
+        logger.info(f"Fetching data plans for network: {network}")
+
+        squadco_api = SquadcoAPI()
+        response = squadco_api.get_data_bundles(network)
+
+        if response.get('success'):
+            data_plans = response.get('data', [])
+            return JsonResponse({'status': 'success', 'data': data_plans})
+        else:
+            error_message = response.get('message', 'Unknown error')
+            logger.error(f"Error fetching data plans: {error_message}")
+            return JsonResponse({'status': 'error', 'message': f'Failed to fetch data plans: {error_message}'}, status=500)
+
+    except requests.RequestException as e:
+        logger.exception(f"Network error in get_data_plans: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'Network error occurred while fetching data plans'}, status=500)
+    except Exception as e:
+        logger.exception(f"Unexpected error in get_data_plans: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'}, status=500)
 
 @login_required
 @require_POST
@@ -1068,25 +1296,25 @@ def search(request):
 
     return redirect('dashboard')
 
-@require_GET
-def vtpass_service_variations(request):
-    service_id = request.GET.get('serviceID')
-    if not service_id:
-        return JsonResponse({'error': 'serviceID is required'}, status=400)
+# @require_GET
+# def vtpass_service_variations(request):
+#     service_id = request.GET.get('serviceID')
+#     if not service_id:
+#         return JsonResponse({'error': 'serviceID is required'}, status=400)
 
-    api_url = f"{settings.VTPASS_API_URL}/service-variations"
-    headers = {
-        'api-key': settings.VTPASS_API_KEY,
-        'secret-key': settings.VTPASS_SECRET_KEY,
-    }
-    params = {'serviceID': service_id}
+#     api_url = f"{settings.VTPASS_API_URL}/service-variations"
+#     headers = {
+#         'api-key': settings.VTPASS_API_KEY,
+#         'secret-key': settings.VTPASS_SECRET_KEY,
+#     }
+#     params = {'serviceID': service_id}
 
-    try:
-        response = requests.get(api_url, headers=headers, params=params)
-        response.raise_for_status()
-        return JsonResponse(response.json())
-    except requests.RequestException as e:
-        return JsonResponse({'error': str(e)}, status=500)
+#     try:
+#         response = requests.get(api_url, headers=headers, params=params)
+#         response.raise_for_status()
+#         return JsonResponse(response.json())
+#     except requests.RequestException as e:
+#         return JsonResponse({'error': str(e)}, status=500)
     
 def get_cable_variations(request, provider):
     url = f"https://vtpass.com/api/service-variations?serviceID={provider}"
