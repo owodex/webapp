@@ -845,7 +845,7 @@ def submit_airtime_request(request):
 
         # Make API call to Squadco
         squadco_api = SquadcoAPI()
-        api_response = squadco_api.buy_airtime(phone, int(amount))
+        api_response = squadco_api.buy_airtime(phone, str(amount))
 
         if api_response.get('success'):
             # Successful transaction
@@ -985,7 +985,7 @@ from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 
-class SquadcoAPI:
+class SquadAPI:
     BASE_URL = "https://sandbox-api-d.squadco.com"
     
     def __init__(self):
@@ -1021,7 +1021,7 @@ def get_data_plans(request):
 
         logger.info(f"Fetching data plans for network: {network}")
 
-        squadco_api = SquadcoAPI()
+        squadco_api = SquadAPI()
         response = squadco_api.get_data_bundles(network)
 
         if response.get('success'):
