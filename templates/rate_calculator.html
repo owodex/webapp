@@ -71,6 +71,9 @@
                 </form>
                 <div class="text-center mt-5" id="calculationResult">
                 </div>
+                <div class="text-center mt-3" id="rateDisclaimer" style="display: none;">
+                    <p class="text-muted"><small>*Rate is subject to change, please <a href="{% url 'support' %}">contact customer service</a> for latest rates. Thank you for your patronage.</small></p>
+                </div>
             </div>
         </div>
     </div>
@@ -87,7 +90,8 @@
             const selectDenomination = document.getElementById('selectDenomination');
             const enterAmount = document.getElementById('enterAmount');
             const calculationResult = document.getElementById('calculationResult');
-        
+            const rateDisclaimer = document.getElementById('rateDisclaimer');
+
             // Fetch gift cards and populate the dropdown
             fetch("/api/get-gift-cards/")
             .then(response => response.json())
@@ -164,6 +168,7 @@
                     .then(data => {
                         if (data.error) {
                             calculationResult.innerHTML = `<p class="text-danger">${data.error}</p>`;
+                            rateDisclaimer.style.display = 'none';
                         } else {
                             const totalAmount = amount * data.rate;
                             const formattedAmount = totalAmount.toLocaleString('en-NG', {
@@ -175,14 +180,15 @@
                             calculationResult.innerHTML = `
                                 <h4 class="display-4">${formattedAmount}</h4>
                             `;
+                            rateDisclaimer.style.display = 'block';
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         calculationResult.innerHTML = '<p class="text-danger">An error occurred while calculating the rate.</p>';
+                        rateDisclaimer.style.display = 'none';
                     });
             });
         });        
     </script>
-
 {% endblock %}
