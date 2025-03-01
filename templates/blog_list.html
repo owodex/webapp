@@ -23,7 +23,7 @@
                             <small><i class="far fa-calendar text-primary me-2"></i>{{ post.created_at|date:"d M, Y" }}</small>
                         </div>
                         <h4 class="mb-3"><a class="text-primary" href="{% url 'blog_detail' post.slug %}">{{ post.title }}</a></h4>
-                        <p>{{ post.content|truncatewords:25 }}</p>
+                        <p>{{ post.content|truncatewords:25|striptags }}</p>
                         <a class="text-primary" href="{% url 'blog_detail' post.slug %}">Read More<i class="fa fa-arrow-right ms-2"></i></a>
                     </div>
                 </div>
