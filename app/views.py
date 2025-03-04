@@ -920,7 +920,7 @@ def submit_data_request(request):
             return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
 
         # Make API call to Squadco
-        url = "https://sandbox-api-d.squadco.com/vending/purchase/data"
+        url = "https://api-d.squadco.com/vending/purchase/data"
         headers = {
             "Authorization": f"Bearer {settings.SQUADCO_SECRET_KEY}",
             "Content-Type": "application/json"
@@ -978,15 +978,14 @@ def submit_data_request(request):
 import logging
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 import requests
 from django.conf import settings
-from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 
 class SquadAPI:
-    BASE_URL = "https://sandbox-api-d.squadco.com"
+    BASE_URL = "https://api-d.squadco.com"
     
     def __init__(self):
         self.headers = {
@@ -999,12 +998,16 @@ class SquadAPI:
         params = {"network": network}
         
         try:
+            logger.info(f"Sending request to Squadco API: URL={url}, Params={params}")
             response = requests.get(url, headers=self.headers, params=params)
+            logger.info(f"Squadco API response status code: {response.status_code}")
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            logger.info(f"Squadco API response data: {data}")
+            return data
         except requests.RequestException as e:
             logger.error(f"Error fetching data bundles from Squadco: {str(e)}")
-            return {"status": "error", "message": "Failed to fetch data bundles"}
+            return {"status": "error", "message": f"Failed to fetch data bundles: {str(e)}"}
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -1024,6 +1027,10 @@ def get_data_plans(request):
         squadco_api = SquadAPI()
         response = squadco_api.get_data_bundles(network)
 
+        if response.get('status') == 'error':
+            logger.error(f"Error from Squadco API: {response.get('message')}")
+            return JsonResponse({'status': 'error', 'message': response.get('message')}, status=500)
+
         if response.get('success'):
             data_plans = response.get('data', [])
             return JsonResponse({'status': 'success', 'data': data_plans})
@@ -1034,10 +1041,10 @@ def get_data_plans(request):
 
     except requests.RequestException as e:
         logger.exception(f"Network error in get_data_plans: {str(e)}")
-        return JsonResponse({'status': 'error', 'message': 'Network error occurred while fetching data plans'}, status=500)
+        return JsonResponse({'status': 'error', 'message': f'Network error occurred while fetching data plans: {str(e)}'}, status=500)
     except Exception as e:
         logger.exception(f"Unexpected error in get_data_plans: {str(e)}")
-        return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'}, status=500)
+        return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
 
 @login_required
 @require_POST

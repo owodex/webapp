@@ -4,7 +4,7 @@ import uuid
 
 class SquadcoAPI:
     def __init__(self):
-        self.base_url = "https://sandbox-api-d.squadco.com"
+        self.base_url = "https://api-d.squadco.com"
         self.secret_key = settings.SQUADCO_SECRET_KEY
 
     def buy_airtime(self, phone, amount):
