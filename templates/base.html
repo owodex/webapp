@@ -2,13 +2,48 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <title>Owodex | Sell Gift Cards at Best Rates</title>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="" name="keywords">
-    <meta content="" name="description">
+    <meta charset="UTF-8">
+    <title>{% block title %}Sell Gift Cards at Best Rates - Owodex{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+
+    <!-- Meta Description -->
+    <meta name="description" content="{% block meta_description %}Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.{% endblock %}">
+
+    <!-- Meta Keywords -->
+    {% block meta_keywords %}
+    <meta name="keywords" content="sell gift cards at best rates, redeem gift cards for cash, top gift card trading app in nigeria, online gift card sales">
+    {% endblock %}
+
+    <!-- Open Graph -->
+    {% block og_tags %}
+    <meta property="og:title" content="Sell Gift Cards at Best Rates - Owodex">
+    <meta property="og:description" content="Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.">
+    <meta property="og:image" content="{% static 'img/OWODEX icon.png' %}">
+    <meta property="og:url" content="https://owodex.com">
+    <meta property="og:type" content="website">
+    {% endblock %}
+
+    <!-- Twitter Tags -->
+    {% block twitter_tags %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sell Gift Cards at Best Rates - Owodex">
+    <meta name="twitter:description" content="Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.">
+    <meta name="twitter:image" content="{% static 'img/OWODEX icon.png' %}">
+    {% endblock %}
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Owodex",
+            "url": "https://www.owodex.com",
+            "logo": "https://www.owodex.com/static/img/OWODEX%20app%20logo.png"
+        }
+        </script>
+
+    {% block extra_meta %}{% endblock %}
 
     <!-- Favicon -->
     <link href="{% static 'img/OWODEX icon.png' %}" rel="icon">
@@ -58,7 +93,7 @@
         <div class="position-relative p-0">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 px-lg-5 py-3 py-lg-0">
                 <a href="/" class="navbar-brand p-0">
-                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo"> 
+                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in Nigeria"> 
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                     <span class="fa fa-bars"></span>
@@ -99,9 +134,10 @@
         <div class="row justify-content-center text-center">
             <div class="col-lg-12">
                 <a href="/">
-                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo" class="footer-logo"> 
+                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in nigeria" class="footer-logo"> 
                 </a>
-                <h2 class="text-white my-5">Get Started on Owodex Today.</h2>
+                <h2 class="text-white mt-5">Top Gift Card Trading App in Nigeria.</h2>
+                <p class="mb-4 text-white" style="font-size: 14px;">Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.</p>
                 <div class = "newsletter">
                     <p class="text-white mb-4">Join our Newsletter for special perks & updates</p>
                     <div class="position-relative mx-auto" style="max-width: 400px;">

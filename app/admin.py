@@ -250,6 +250,22 @@ class PostAdmin(admin.ModelAdmin):
     ordering = ('status', '-created_at')
     filter_horizontal = ('tags',)
 
+    fieldsets = (
+        ('Main Content', {
+            'fields': (
+                'title', 'slug', 'author', 'category', 'tags',
+                'image', 'status', 'content'
+            )
+        }),
+        ('SEO Information', {
+            'classes': ('collapse',),
+            'fields': (
+                'meta_title', 'meta_description', 'meta_keywords'
+            )
+        }),
+    )
+
+
 # Optionally, you can also register these models individually
 admin.site.register(GiftCardCurrency)
 admin.site.register(GiftCardType)

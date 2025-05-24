@@ -346,6 +346,11 @@ class Post(models.Model):
     image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
     status = models.CharField(max_length=10, choices=[('draft', 'Draft'), ('published', 'Published')], default='draft')
 
+    # SEO fields
+    meta_title = models.CharField(max_length=70, blank=True)
+    meta_description = models.CharField(max_length=200, blank=True)
+    meta_keywords = models.CharField(max_length=255, blank=True)
+
     def __str__(self):
         return self.title
 

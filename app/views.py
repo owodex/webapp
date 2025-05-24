@@ -1055,9 +1055,8 @@ def submit_cable_request(request):
     package = request.POST.get('package')
     account_name = request.POST.get('account_name')
     amount = request.POST.get('amount')
-    subscription_type = request.POST.get('subscription_type', 'change')  # Default to 'change' if not provided
-
-    # Generate a unique invoice ID
+    subscription_type = request.POST.get('subscription_type', 'change') 
+  
     invoice_id = str(uuid.uuid4().hex)[:20]
 
     if not all([provider, smart_card_number, package, account_name, amount]):
@@ -1076,7 +1075,6 @@ def submit_cable_request(request):
     vtpass_api = VTPassCableAPI()
 
     try:
-        # Prepare the payload for VTPass API
         if subscription_type == 'renew':
             response = vtpass_api.renew_bouquet(
                 request_id=invoice_id,

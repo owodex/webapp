@@ -1,10 +1,34 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}{{ post.meta_title|default:post.title }}{% endblock %}
+
+{% block meta_description %}{{ post.meta_description }}{% endblock %}
+
+{% block og_tags %}
+  <meta property="og:title" content="{{ post.meta_title|default:post.title }}">
+  <meta property="og:description" content="{{ post.meta_description|default:post.content|striptags }}">
+  {% if post.image %}
+    <meta property="og:image" content="{{ request.build_absolute_uri|slice:":-1" }}{{ post.image.url }}">
+  {% endif %}
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:type" content="article">
+{% endblock %}
+
+{% block twitter_tags %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ post.meta_title|default:post.title }}">
+  <meta name="twitter:description" content="{{ post.meta_description|default:post.content|striptags }}">
+  {% if post.image %}
+    <meta name="twitter:image" content="{{ request.build_absolute_uri|slice:":-1" }}{{ post.image.url }}">
+  {% endif %}
+  <meta name="twitter:site" content="@owodexcards">
+{% endblock %}
+
 {% block maincontent %}
 <!-- Blog Detail Start -->
 <div class="container-xxl py-5">
-    <div class="container details-margin">
+    <div class="container details-margin"> 
         <div class="row g-5">
             <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.1s">
                 <div class="mb-5">
