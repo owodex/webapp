@@ -73,6 +73,14 @@
     <link href="{% static 'css/blog.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WTQ9PP3B');</script>
+    <!-- End Google Tag Manager -->
+
     {% block extra_css%}
     {% endblock %}
 
@@ -93,7 +101,7 @@
         <div class="position-relative p-0">
             <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 px-lg-5 py-3 py-lg-0">
                 <a href="/" class="navbar-brand p-0">
-                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in Nigeria"> 
+                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in Nigeria">
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                     <span class="fa fa-bars"></span>
@@ -119,13 +127,13 @@
                     </div>
                 </div>
             </nav>
-            
+
         {% block maincontent%}
         {% endblock%}
 
         </div>
         <!-- Navbar & Hero End -->
-    
+
     </div>
 
     <!-- Footer Start -->
@@ -134,7 +142,7 @@
         <div class="row justify-content-center text-center">
             <div class="col-lg-12">
                 <a href="/">
-                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in nigeria" class="footer-logo"> 
+                    <img src="{% static 'img/OWODEX app logo.png' %}" alt="top gift card trading app in nigeria" class="footer-logo">
                 </a>
                 <h2 class="text-white mt-5">Top Gift Card Trading App in Nigeria.</h2>
                 <p class="mb-4 text-white" style="font-size: 14px;">Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.</p>
@@ -157,7 +165,7 @@
         <div class="copyright">
             <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    &copy; {% now "Y" %}, <a class="border-bottom" href="#">Owodex</a>. All Right Reserved. 
+                    &copy; {% now "Y" %}, <a class="border-bottom" href="#">Owodex</a>. All Right Reserved.
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <div class="footer-menu">
@@ -246,6 +254,11 @@
 <script src="//code.jivosite.com/widget/u74TqscLy8" async></script>
 {% block extra_js%}
 {% endblock %}
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WTQ9PP3B"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 </body>
 
 </html>

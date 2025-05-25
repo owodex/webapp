@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-m$318^vu8&85%hqk33jmnnugx9lbn2_)7+vi*2f5-cxr-jz@rl'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["owodex.com", "88.223.94.179", "www.owodex.com", "127.0.0.1", "owodex.pythonanywhere.com"]
 
@@ -153,10 +153,14 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.mailgun.org'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+EMAIL_HOST_USER = 'contact@owodex.com'
+EMAIL_HOST_PASSWORD = '$01anrewajU92'
 
-SQUADCO_SECRET_KEY = 'sandbox_sk_fa19d9d5d275a8d179b354713831cdd1f636df34b432'
+DEFAULT_FROM_EMAIL = 'Owodex Support <support@owodex.com>'
+SERVER_EMAIL = 'support@owodex.com'
+
+SQUADCO_SECRET_KEY = 'sk_d1d657b7d3caced36ea63269badaa965ee287f40'
+
 
 
 LOGGING = {

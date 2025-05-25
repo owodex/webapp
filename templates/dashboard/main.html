@@ -37,9 +37,17 @@
     <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dark-theme.css' %}">
 
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WTQ9PP3B');</script>
+    <!-- End Google Tag Manager -->
+
     {% block extra_css %}
     {% endblock %}
-    
+
 </head>
 <body class="d-flex flex-column min-vh-100">
         <!-- Spinner Start -->
@@ -51,10 +59,10 @@
         <!-- Spinner End -->
 
         <!-- Navigation bar -->
-        
+
         <nav class="navbar navbar-expand-lg navbar-dark px-4 px-lg-5 py-3" style="background-color: #0F172B;">
             <a href="/" class="navbar-brand p-0">
-                <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo"> 
+                <img src="{% static 'img/OWODEX app logo.png' %}" alt="Owodex Logo">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                 <span class="fa fa-bars"></span>
@@ -88,7 +96,7 @@
                 </div>
             </div>
         </nav>
-        
+
 
         <!-- Mobile Search Modal -->
         <div class="modal fade" id="mobileSearchModal" tabindex="-1" aria-labelledby="mobileSearchModalLabel" aria-hidden="true">
@@ -127,7 +135,7 @@
             </div>
         </footer>
 
-    
+
 
     <!-- Profile Modal -->
     <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
@@ -151,7 +159,7 @@
         </div>
         </div>
     </div>
-  
+
   <!-- Delete Account Modal -->
   <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -242,7 +250,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const mobileSearchBtn = document.getElementById('mobileSearchBtn');
             const mobileSearchModal = new bootstrap.Modal(document.getElementById('mobileSearchModal'));
-    
+
             mobileSearchBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 mobileSearchModal.show();
@@ -256,10 +264,10 @@
           const deleteAccountAlert = document.getElementById('deleteAccountAlert');
           const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccount');
           const deleteAccountModal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
-      
+
           confirmDeleteAccountBtn.addEventListener('click', function() {
               const formData = new FormData(deleteAccountForm);
-      
+
               fetch('{% url "delete_account" %}', {
                   method: 'POST',
                   body: formData,
@@ -291,20 +299,20 @@
                   deleteAccountAlert.textContent = 'An error occurred. Please try again.';
               });
           });
-      
+
           deleteAccountModal._element.addEventListener('hidden.bs.modal', function () {
               deleteAccountForm.reset();
               deleteAccountAlert.classList.add('d-none');
           });
       });
       </script>
-    
+
     <script>
     $(document).ready(function() {
         var searchTerms = [
             "Airtime", "Data", "Electricity", "Transfer", "Cable", "Giftcards", "Transaction"
         ];
-    
+
         $("#search-input").autocomplete({
             source: searchTerms,
             minLength: 1,
@@ -312,13 +320,13 @@
                 redirectToService(ui.item.value);
             }
         });
-    
+
         $("#search-form").on("submit", function(e) {
             e.preventDefault();
             var searchTerm = $("#search-input").val().toLowerCase();
             redirectToService(searchTerm);
         });
-    
+
         function redirectToService(service) {
             service = service.toLowerCase();
             if (service.includes('airtime') || service.includes('data')) {
@@ -338,13 +346,13 @@
                     window.location.href = "{% url 'services' %}";
             }
         }
-    
+
         // Handle mobile search button click
         $("#mobileSearchBtn").on("click", function(e) {
             e.preventDefault();
             $('#mobileSearchModal').modal('show');
         });
-    
+
         // Handle search form submission in the mobile modal
         $("#mobileSearchModal form").on("submit", function(e) {
             e.preventDefault();
@@ -410,12 +418,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             const notificationBtn = document.getElementById('notificationBtn');
             const notificationsModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
-    
+
             notificationBtn.addEventListener('click', function() {
                 // Open the notifications modal
                 notificationsModal.show();
             });
-    
+
         });
     </script>
     <script>
@@ -431,13 +439,13 @@
                         if (response.success) {
                             // Remove 'unread' class from all notification items
                             $('.notification-item').removeClass('unread');
-                            
+
                             // Remove the badge completely
                             $('#notificationCount').remove();
-                            
+
                             // Update the modal title
                             $('#notificationsModalLabel').text('No New Notifications');
-                            
+
                             // Clear the notifications container
                             $('#notificationsContainer').html('<div class="notification-item d-flex align-items-center p-3"><i class="fas fa-info-circle text-info me-3 fa-2x"></i><p class="mb-0">No notifications</p></div>');
                         }
@@ -464,5 +472,10 @@
 <!--End of Tawk.to Script-->
 
 <script src="//code.jivosite.com/widget/u74TqscLy8" async></script>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WTQ9PP3B"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 </body>
 </html>
