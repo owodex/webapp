@@ -5,6 +5,17 @@
 <div class="container-fluid dashboard-area">
     <div class="container dashboard">
         <h2 class="mb-4">Giftcards</h2>
+
+        <div class="row mb-5">
+            <div class="col-12 btn-container">
+                <button id="sellBtn" class="btn btn-primary btn-lg">
+                    <i class="fas fa-tag me-2"></i>Sell
+                </button>
+                <button id="buyBtn" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-shopping-cart me-2"></i>Buy
+                </button>
+            </div>
+        </div>
         
         <div class="row mb-5">
             <div class="col-md-6">
@@ -26,10 +37,22 @@
             {% endfor %}
         {% endif %}
 
-        <div class="row" id="giftcardContainer">
+        <div class="row" id="sellGiftcardContainer">
             {% for giftcard in giftcards %}
                 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
                     <a href="{% url 'trade_giftcard' giftcard_id=giftcard.id %}" class="giftcard-link">
+                        <div class="card h-100">
+                            <img src="{{ giftcard.image.url }}" class="card-img-top" alt="{{ giftcard.name }} giftcard">
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="row d-none" id="buyGiftcardContainer">
+            {% for giftcard in giftcards %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <a href="{% url 'buy_giftcard' giftcard_id=giftcard.id %}" class="giftcard-link">
                         <div class="card h-100">
                             <img src="{{ giftcard.image.url }}" class="card-img-top" alt="{{ giftcard.name }} giftcard">
                         </div>
@@ -44,43 +67,78 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const buyBtn = document.getElementById('buyBtn');
+        const sellBtn = document.getElementById('sellBtn');
+        const sellContainer = document.getElementById('sellGiftcardContainer');
+        const buyContainer = document.getElementById('buyGiftcardContainer');
         const searchInput = document.getElementById('searchGiftcards');
         const searchBtn = document.getElementById('searchButton');
-        const container = document.getElementById('giftcardContainer');
 
+        // Button toggle logic
+        sellBtn.classList.add('btn-primary');
+        sellBtn.classList.remove('btn-secondary');
+        buyBtn.classList.add('btn-secondary');
+        buyBtn.classList.remove('btn-primary');
+        sellContainer.classList.remove('d-none');
+        buyContainer.classList.add('d-none');
+
+        buyBtn.addEventListener('click', function() {
+            buyBtn.classList.add('btn-primary');
+            buyBtn.classList.remove('btn-secondary');
+            sellBtn.classList.add('btn-secondary');
+            sellBtn.classList.remove('btn-primary');
+            sellContainer.classList.add('d-none');
+            buyContainer.classList.remove('d-none');
+            filterGiftcards(); // Filter on view switch
+        });
+
+        sellBtn.addEventListener('click', function() {
+            sellBtn.classList.add('btn-primary');
+            sellBtn.classList.remove('btn-secondary');
+            buyBtn.classList.add('btn-secondary');
+            buyBtn.classList.remove('btn-primary');
+            sellContainer.classList.remove('d-none');
+            buyContainer.classList.add('d-none');
+            filterGiftcards(); // Filter on view switch
+        });
+
+        // Search logic for both views
         function filterGiftcards() {
             const searchTerm = searchInput.value.toLowerCase();
-            const cards = container.getElementsByClassName('col-lg-3');
+            const activeContainer = sellContainer.classList.contains('d-none') ? buyContainer : sellContainer;
+            const cards = activeContainer.querySelectorAll('.col-lg-3, .col-md-4, .col-sm-6');
             let visibleCards = 0;
-        
+
             // Remove any existing "No results" message
-            const existingMessage = container.querySelector('.no-results-message');
+            let existingMessage = activeContainer.querySelector('.no-results-message');
             if (existingMessage) {
                 existingMessage.remove();
             }
-        
-            Array.from(cards).forEach(card => {
-                const alt = card.querySelector('img').alt.toLowerCase();
-                if (alt.includes(searchTerm)) {
+
+            cards.forEach(card => {
+                const img = card.querySelector('img');
+                const altText = img ? img.alt.toLowerCase() : '';
+                if (altText.includes(searchTerm)) {
                     card.style.display = '';
                     visibleCards++;
                 } else {
                     card.style.display = 'none';
                 }
             });
-        
-            // Check if no cards are visible
+
+            // Show "No results" if nothing matches
             if (visibleCards === 0) {
-                // Show "No results found" message
-                const messageElement = document.createElement('div');
-                messageElement.className = 'col-12 text-center no-results-message';
-                messageElement.innerHTML = '<p class="mt-4">No giftcards found matching your search.</p>';
-                container.appendChild(messageElement);
+                const msg = document.createElement('div');
+                msg.className = 'no-results-message text-center text-muted w-100';
+                msg.textContent = 'No giftcards found.';
+                activeContainer.appendChild(msg);
             }
         }
 
-        searchBtn.addEventListener('click', filterGiftcards);
-        searchInput.addEventListener('keyup', filterGiftcards);
+        if (searchBtn && searchInput) {
+            searchBtn.addEventListener('click', filterGiftcards);
+            searchInput.addEventListener('keyup', filterGiftcards);
+        }
     });
 </script>
 {% endblock %}

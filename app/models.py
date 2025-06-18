@@ -62,7 +62,9 @@ class Transaction(models.Model):
     )
 
     SERVICE_TYPES = (
-        ('giftcard', 'Giftcard Purchase'),
+        ('giftcard', 'Giftcard Sale'),
+        ('buy_giftcard', 'Giftcard Purchase'),
+        ('deposit', 'Deposit'),
         ('bill_payment', 'Bill Payment'),
         ('money_transfer', 'Money Transfer'),
         ('signup_bonus', 'Signup Bonus'),
@@ -84,6 +86,7 @@ class Transaction(models.Model):
     service = models.CharField(max_length=50, choices=SERVICE_TYPES)
     invoice_id = models.CharField(max_length=20, unique=True)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
+    email = models.EmailField(blank=True, null=True)
     account_number = models.CharField(max_length=20, blank=True, null=True)
     bank_name = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
@@ -97,7 +100,7 @@ class Transaction(models.Model):
         ordering = ['-date']
 
     def update_wallet_on_completion(self):
-        if self.status == 'completed' and self.service == 'giftcard':
+        if self.status == 'completed' and self.service in ['giftcard', 'deposit']:
             wallet, created = Wallet.objects.get_or_create(user=self.user)
             wallet.balance += self.amount
             wallet.save()
@@ -200,15 +203,6 @@ class ElectricityRequest(models.Model):
         return f"{self.operator} - {self.meter_number} - {self.amount}"
     
 class GiftCardTransaction(models.Model):
-    CURRENCY_CHOICES = [
-        ('us', '🇺🇸 United States'),
-        ('gb', '🇬🇧 United Kingdom'),
-        ('ca', '🇨🇦 Canada'),
-    ]
-    TYPE_CHOICES = [
-        ('ecode', 'E-code'),
-        ('physical', 'Physical'),
-    ]
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('completed', 'Completed'),
@@ -218,8 +212,9 @@ class GiftCardTransaction(models.Model):
     transaction = models.OneToOneField('Transaction', on_delete=models.CASCADE, related_name='giftcard_transaction')
     giftcard_name = models.CharField(max_length=100)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True)
-    currency = models.CharField(max_length=2, choices=CURRENCY_CHOICES)
-    card_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    currency = models.ForeignKey('GiftCardCurrency', on_delete=models.CASCADE)
+    card_type = models.ForeignKey('GiftCardType', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='giftcard_transaction_images/', null=True, blank=True)
     denomination = models.CharField(max_length=10)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
@@ -358,3 +353,45 @@ class Post(models.Model):
         if not self.slug:
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+
+
+class DepositRequest(models.Model):
+    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='deposit_request', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    proof = models.ImageField(upload_to='deposit_proofs/')
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Optionally, add fields for admin notes, etc.
+
+    def __str__(self):
+        return f"{self.user.email} - ₦{self.amount} - {self.status}"
+
+def notify_user_transaction_status(user, transaction, status):
+    from .models import Notification
+    service_display = dict(transaction.SERVICE_TYPES).get(transaction.service, transaction.service)
+    if status == 'completed':
+        title = f"{service_display} Completed"
+        message = f"Your {service_display.lower()} transaction of ₦{transaction.amount} has been completed."
+    elif status == 'cancelled':
+        title = f"{service_display} Cancelled"
+        message = f"Your {service_display.lower()} transaction of ₦{transaction.amount} was cancelled."
+    else:
+        title = f"{service_display} Update"
+        message = f"Your {service_display.lower()} transaction of ₦{transaction.amount} status changed to {status}."
+    notif = Notification.objects.create(
+        title=title,
+        message=message,
+        is_for_all_users=False
+    )
+    notif.users.add(user)
+
+@receiver(pre_save, sender=Transaction)
+def transaction_pre_save(sender, instance, **kwargs):
+    if instance.id:  # Check if this is an existing instance
+        old_instance = Transaction.objects.get(id=instance.id)
+        if old_instance.status != instance.status:
+            if old_instance.status != 'completed' and instance.status == 'completed':
+                instance.update_wallet_on_completion()
+            if instance.status in ['completed', 'cancelled']:
+                notify_user_transaction_status(instance.user, instance, instance.status)

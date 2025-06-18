@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password, check_password
-from .models import CustomUser, Transaction, Notification, GiftCard, GiftCardRate, GiftCardCurrency, GiftCardType, GiftCardDenomination, GiftCardImage, GiftCardTransaction, ElectricityRequest, CableRequest, AirtimeRequest, DataRequest, Wallet, Beneficiary
+from .models import *
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
@@ -287,14 +287,15 @@ from .models import Wallet
 @login_required
 def dashboard(request):
     recent_transactions = Transaction.objects.filter(user=request.user).order_by('-date')[:5]
-
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-
+    user_notifications = Notification.objects.filter(users=request.user).order_by('-created_at')[:10]
+    unread_notification_count = Notification.objects.filter(users=request.user, is_read=False).count()
     context = {
         'recent_transactions': recent_transactions,
         'wallet_balance': wallet.balance,
+        'user_notifications': user_notifications,
+        'unread_notification_count': unread_notification_count,
     }
-
     return render(request, 'dashboard/index.html', context)
 
 
@@ -1253,12 +1254,24 @@ def trade_giftcard(request, giftcard_id):
             invoice_id=invoice_id
         )
 
+        currency_code = request.POST.get('giftCardCurrency')
+        card_type_code = request.POST.get('giftCardType')
+
+        try:
+            currency_obj = GiftCardCurrency.objects.get(currency=currency_code)
+            card_type_obj = GiftCardType.objects.get(giftcard=giftcard, type=card_type_code)
+        except (GiftCardCurrency.DoesNotExist, GiftCardType.DoesNotExist):
+            return render(request, 'dashboard/trade_giftcards.html', {
+                'error_message': 'Invalid currency or card type selected.',
+                'form_data': request.POST
+            })
+
         giftcard_transaction = GiftCardTransaction.objects.create(
             user=request.user,
             transaction=transaction,
             giftcard_name=giftcard_name,
-            currency=currency,
-            card_type=card_type,
+            currency=currency_obj,
+            card_type=card_type_obj,
             denomination=denomination,
             amount=amount
         )
@@ -1272,6 +1285,121 @@ def trade_giftcard(request, giftcard_id):
         return redirect('giftcards')
 
     return render(request, 'dashboard/trade_giftcards.html', context)
+
+@login_required
+def buy_giftcard(request, giftcard_id):
+    giftcard = get_object_or_404(GiftCard, id=giftcard_id)
+    currencies = GiftCardCurrency.objects.filter(giftcard=giftcard)
+    types = GiftCardType.objects.filter(giftcard=giftcard)
+    denominations = GiftCardDenomination.objects.filter(giftcard=giftcard)
+
+    context = {
+        'giftcard': giftcard,
+        'currencies': currencies,
+        'types': types,
+        'denominations': denominations,
+    }
+        
+    if request.method == 'POST':
+        giftcard_name = request.POST.get('giftcard_name')
+        currency = request.POST.get('giftCardCurrency')
+        card_type = request.POST.get('giftCardType')
+        denomination = request.POST.get('denomination')
+        amount = request.POST.get('amount')
+        email = request.POST.get('email')
+
+        try:
+            amount = Decimal(amount)
+        except InvalidOperation:
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': 'Invalid amount provided. Please enter a valid number.',
+                'form_data': request.POST,
+                **context
+            })
+
+        # Fetch the rate for the selected options
+        try:
+            currency_obj = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency)
+            card_type_obj = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
+            denomination_obj = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination)
+            rate_obj = GiftCardRate.objects.get(
+                giftcard=giftcard,
+                currency=currency_obj,
+                card_type=card_type_obj,
+                denomination=denomination_obj
+            )
+            rate = Decimal(rate_obj.rate)
+        except (GiftCardCurrency.DoesNotExist, GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist, GiftCardRate.DoesNotExist):
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': 'Invalid gift card selection. Please try again.',
+                'form_data': request.POST,
+                **context
+            })
+
+        total = rate * amount
+
+        # Deduct from user's wallet
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        if wallet.balance < total:
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': f'Insufficient wallet balance. You need ₦{total}, but you have ₦{wallet.balance}.',
+                'form_data': request.POST,
+                **context
+            })
+
+        # Deduct and save
+        wallet.balance -= total
+        wallet.save()
+
+        invoice_id = str(uuid.uuid4().hex)[:20]
+
+        transaction = Transaction.objects.create(
+            user=request.user,
+            amount=total,
+            service='buy_giftcard',
+            status='pending',
+            transaction_type='debit',
+            invoice_id=invoice_id,
+            email=email,
+        )
+
+        # You can save more details if needed
+
+        messages.success(request, 'Gift card buy request submitted successfully!')
+        return redirect('giftcards')
+
+    return render(request, 'dashboard/buy_giftcards.html', context)
+
+@login_required
+@csrf_exempt
+def submit_deposit(request):
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        proof = request.FILES.get('proof')
+        if not amount or not proof:
+            return JsonResponse({'success': False, 'message': 'Amount and proof are required.'}, status=400)
+        try:
+            amount = Decimal(amount)
+        except Exception:
+            return JsonResponse({'success': False, 'message': 'Invalid amount.'}, status=400)
+        
+        deposit = DepositRequest.objects.create(
+            user=request.user,
+            amount=amount,
+            proof=proof,
+            status='pending'
+        )
+        # Create a pending transaction
+        Transaction.objects.create(
+            user=request.user,
+            amount=amount,
+            service='deposit',
+            status='pending',
+            transaction_type='credit',
+            invoice_id=f'DEP{deposit.id}{int(deposit.created_at.timestamp())}'
+        )
+        return JsonResponse({'success': True, 'message': 'Deposit submitted. Awaiting approval.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=400)
 
 def search(request):
     query = request.GET.get('q', '').lower()
@@ -1410,33 +1538,40 @@ def mark_all_notifications_read(request):
 def get_rate(request):
     giftcard_name = request.GET.get('giftcard')
     currency_code = request.GET.get('currency')
-    card_type = request.GET.get('type')
+    card_type_code = request.GET.get('type')
     denomination_value = request.GET.get('denomination')
 
     try:
         giftcard = GiftCard.objects.get(name=giftcard_name)
-
         currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency_code)
-        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
+        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type_code)
         denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
 
-        rate = GiftCardRate.objects.get(
-            giftcard=giftcard,
-            currency=currency,
-            card_type=card_type,
-            denomination=denomination
-        )
+        try:
+            rate = GiftCardRate.objects.get(
+                giftcard=giftcard,
+                currency=currency,
+                card_type=card_type,
+                denomination=denomination
+            ).rate
+        except GiftCardRate.DoesNotExist:
+            # Set your default rates here
+            if card_type.type.lower() == "e-code":
+                rate = Decimal(1000)
+            elif card_type.type.lower() == "physical":
+                rate = Decimal(1120)
+            else:
+                rate = Decimal(900)
 
         return JsonResponse({
-            'rate': rate.rate,
+            'rate': str(rate),
             'giftcard': giftcard.name,
             'currency': currency.currency_name,
             'type': card_type.type,
             'denomination': denomination.value
         })
     except (GiftCard.DoesNotExist, GiftCardCurrency.DoesNotExist, 
-            GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist, 
-            GiftCardRate.DoesNotExist) as e:
+            GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist) as e:
         return JsonResponse({'error': str(e)}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -1481,11 +1616,21 @@ def get_g_rate(request):
         currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency_name__iexact=currency_name)
         card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type_name)
         denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
-        rate_obj = GiftCardRate.objects.get(
-            giftcard=giftcard, currency=currency, card_type=card_type, denomination=denomination
-        )
+        
+        try:
+            rate_obj = GiftCardRate.objects.get(
+                giftcard=giftcard, currency=currency, card_type=card_type, denomination=denomination
+            )
+            rate = float(rate_obj.rate)
+        except GiftCardRate.DoesNotExist:
+            # Set your default rates here
+            if card_type.type.lower() == "e-code":
+                rate = 1000.0
+            elif card_type.type.lower() == "physical":
+                rate = 1120.0
+            else:
+                rate = 900.0
 
-        rate = float(rate_obj.rate)
         total_value = round(rate * amount, 2)
 
         return JsonResponse({

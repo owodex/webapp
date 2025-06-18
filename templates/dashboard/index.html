@@ -43,6 +43,9 @@
                         <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#transferModal"><i class="fas fa-exchange-alt"></i> Transfer</button>
                         <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#bankTransferModal"><i class="fas fa-wallet"></i> Withdraw</button>
                     </div>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#depositModal">
+                      <i class="fas fa-arrow-down"></i> Deposit
+                    </button>
                 </div>
                 <!-- Recent transactions -->
                 <div class="card">
@@ -209,7 +212,85 @@
       </div>
     </div>
   </div>
+
+  <!-- Deposit Modal Step 1 -->
+  <div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content custom-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="depositModalLabel">Deposit Funds</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="depositAmountForm">
+            <div class="mb-3">
+              <label for="depositAmount" class="form-label">Amount (₦)</label>
+              <input type="number" class="form-control" id="depositAmount" name="amount" min="100" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Continue</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deposit Modal Step 2: Show Bank Details -->
+  <div class="modal fade" id="depositBankModal" tabindex="-1" aria-labelledby="depositBankModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content custom-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="depositBankModalLabel">Transfer Instructions</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Transfer <strong>₦<span id="transferAmount"></span></strong> to:</p>
+          <ul class="list-unstyled">
+            <li><strong>Account Name:</strong> <span id="depositAccountName">Owodex Digital Technologies LTD</span></li>
+            <li><strong>Bank:</strong> <span id="depositBankName">Kuda Bank</span></li>
+            <li><strong>Account Number:</strong> <span id="depositAccountNumber">3002504615</span></li>
+          </ul>
+          <button class="btn btn-primary w-100" id="continueProofBtn">I Have Transferred</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deposit Modal Step 3: Upload Proof -->
+  <div class="modal fade" id="depositProofModal" tabindex="-1" aria-labelledby="depositProofModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content custom-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="depositProofModalLabel">Upload Proof of Payment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="depositProofForm" enctype="multipart/form-data">
+            <div class="mb-3">
+              <label for="proofImage" class="form-label">Upload Screenshot/Receipt</label>
+              <input type="file" class="form-control" id="proofImage" name="proof" accept="image/*,application/pdf" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Submit Proof</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
   
+  <!-- Deposit Success Modal -->
+  <div class="modal fade" id="depositSuccessModal" tabindex="-1" aria-labelledby="depositSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content custom-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="depositSuccessModalLabel">Deposit Submitted</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+          <p>Your deposit request has been submitted. We will verify and credit your wallet soon.</p>
+        </div>
+      </div>
+    </div>
+  </div>
   
 {% endblock %}
 
@@ -358,6 +439,82 @@ function updateTransactionList() {
             // For this example, we'll just reload the page
             location.reload();
         }
+    });
+
+    // deposit modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Step 1: Amount form
+      document.getElementById('depositAmountForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('depositAmount').value;
+        if (!amount || amount < 100) {
+          alert('Please enter a valid amount (minimum ₦100).');
+          return;
+        }
+        document.getElementById('transferAmount').textContent = amount;
+        // Show bank modal
+        bootstrap.Modal.getInstance(document.getElementById('depositModal')).hide();
+        new bootstrap.Modal(document.getElementById('depositBankModal')).show();
+      });
+
+      // Step 2: Continue to proof
+      document.getElementById('continueProofBtn').addEventListener('click', function() {
+        bootstrap.Modal.getInstance(document.getElementById('depositBankModal')).hide();
+        new bootstrap.Modal(document.getElementById('depositProofModal')).show();
+      });
+
+      // Step 3: Submit proof
+      document.getElementById('depositProofForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const proofInput = document.getElementById('proofImage');
+          const amount = document.getElementById('depositAmount').value;
+          if (!proofInput.files.length) {
+            alert('Please upload your payment proof.');
+            return;
+          }
+          const formData = new FormData();
+          formData.append('amount', amount);
+          formData.append('proof', proofInput.files[0]);
+
+          // Get CSRF token from cookie
+          function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+          }
+          const csrftoken = getCookie('csrftoken');
+
+          fetch('/submit-deposit/', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrftoken
+            },
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              bootstrap.Modal.getInstance(document.getElementById('depositProofModal')).hide();
+              new bootstrap.Modal(document.getElementById('depositSuccessModal')).show();
+              document.getElementById('depositAmountForm').reset();
+              document.getElementById('depositProofForm').reset();
+            } else {
+              alert(data.message || 'Error submitting deposit.');
+            }
+          })
+          .catch(() => {
+            alert('Error submitting deposit.');
+          });
+      });
     });
 </script>
 <script>

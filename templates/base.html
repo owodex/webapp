@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Sell Gift Cards at Best Rates - Owodex{% endblock %}</title>
+    <title>{% block title %}Sell Gift Cards at Best Rates in Nigeria - Owodex{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="index, follow">
 
@@ -13,13 +13,13 @@
 
     <!-- Meta Keywords -->
     {% block meta_keywords %}
-    <meta name="keywords" content="sell gift cards at best rates, redeem gift cards for cash, top gift card trading app in nigeria, online gift card sales">
+    <meta name="keywords" content="sell gift cards at best rates in Nigeria, redeem gift cards for cash, top gift card trading app in nigeria, online gift card sales">
     {% endblock %}
 
     <!-- Open Graph -->
     {% block og_tags %}
-    <meta property="og:title" content="Sell Gift Cards at Best Rates - Owodex">
-    <meta property="og:description" content="Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.">
+    <meta property="og:title" content="{% block og_title %}Sell Gift Cards at Best Rates - Owodex{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.{% endblock %}">
     <meta property="og:image" content="{% static 'img/OWODEX icon.png' %}">
     <meta property="og:url" content="https://owodex.com">
     <meta property="og:type" content="website">
