@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block maincontent %}
-    <div class="py-2 bg-dark hero-header mb-5">
+    <div class="py-2 bg-dark hero-header">
         <div class="container my-5 py-5">
             <div class="row align-items-center g-5">
                 <div class="col-lg-8 text-center text-lg-start">
-                    <h1 class="display-3 text-white animated slideInLeft">Sell Gift Cards<br> at Best Rates.</h1>
+                    <h1 class="display-4 text-white animated slideInLeft">Sell Gift Cards at Best<br> Rates in Nigeria.</h1>
                     <p class="text-white animated slideInLeft mb-4 pb-2">Redeem Gift Cards for Cash on the top gift card trading app in Nigeria.</p>
                     <div class="d-lg-flex flex-column flex-sm-row justify-content-center justify-content-lg-start ">
                         {% if not user.is_authenticated %}
@@ -31,24 +31,37 @@
 </div>
 <!-- Navbar & Hero End -->
 
+<!-- Announcement Marquee -->
+<div class="announcement-marquee py-2 px-3 mb-4" style="background: #FEA116; border-radius: 8px; overflow: hidden;">
+  <div class="d-flex align-items-center">
+    <i class="fas fa-bullhorn me-2" style="color: #fff; font-size: 1.3rem;"></i>
+    <div class="marquee-text flex-grow-1" style="white-space: nowrap; overflow: hidden; position: relative;">
+      <span class="marquee-inner">
+        <strong>Announcement:</strong> All gift card rates are subject to change. Please contact support via live chat to get updated rates. Thanks!
+      </span>
+    </div>
+    <i class="fas fa-bullhorn ms-2" style="color: #fff; font-size: 1.3rem;"></i>
+  </div>
+</div>
+
 <!-- Logo Carousel Start -->
 <div class="container-fluid wow fadeInUp" data-wow-delay="0.1s">
     <div class="container my-5">
         <div class="owl-carousel logo-carousel">
             <div class="item">
-                <img src="{% static 'img/visa-logo.png' %}" alt="Visa" class="sell gift cards at best rates">
+                <img src="{% static 'img/visa-logo.png' %}" alt="Sell Gift Cards at Best Rates in Nigeria">
             </div>
             <div class="item">
-                <img src="{% static 'img/mastercard-logo.svg' %}" alt="Mastercard" class="sell gift cards at best rates">
+                <img src="{% static 'img/mastercard-logo.svg' %}" alt="Sell Gift Cards at Best Rates in Nigeria">
             </div>
             <div class="item">
-                <img src="{% static 'img/amazon-logo.jpg' %}" alt="Amazon" class="sell gift cards at best rates">
+                <img src="{% static 'img/amazon-logo.jpg' %}" alt="Sell Gift Cards at Best Rates in Nigeria">
             </div>
             <div class="item">
-                <img src="{% static 'img/coinbase-logo.png' %}" alt="Coinbase" class="sell gift cards at best rates">
+                <img src="{% static 'img/coinbase-logo.png' %}" alt="Sell Gift Cards at Best Rates in Nigeria">
             </div>
             <div class="item">
-                <img src="{% static 'img/paystack-logo.png' %}" alt="Paystack" class="sell gift cards at best rates">
+                <img src="{% static 'img/paystack-logo.png' %}" alt="Sell Gift Cards at Best Rates in Nigeria">
             </div>
             <!-- Add more logos as needed -->
         </div>
@@ -60,7 +73,7 @@
 <div class="container-xxl py-5">
     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
         <h5 class="section-title ff-secondary text-center text-primary fw-normal">Our Top Offerings</h5>
-        <h2 class="mb-5">Sell Gift Cards at Best Rates</h2>
+        <h2 class="mb-5">Sell Gift Cards at Best Rates in Nigeria</h2>
     </div>
     <div class="container">
         <div class="row g-4">
@@ -69,7 +82,7 @@
                     <div class="p-4 text-center">
                         <i class="fa fa-3x fa-gift text-primary my-5"></i>
                         <h5>Gift Cards</h5>
-                        <p>Sell gift cards at best rates on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.</p>
+                        <p>Sell gift cards at best rates in Nigeria on the top gift card trading app in Nigeria. Redeem Gift Cards for Cash on Owodex and receive fast payment.</p>
                     </div>
                 </div>
             </div>
@@ -160,13 +173,13 @@
                         <img class="img-fluid rounded w-75 wow zoomIn" data-wow-delay="0.5s" src="{% static 'img/google.png' %} " alt="top gift card trading app in nigeria">
                     </div>
                     <div class="col-6 text-end">
-                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.7s" src="{% static 'img/ebay.png' %}" alt="sell gift cards at best rates">
+                        <img class="img-fluid rounded w-100 wow zoomIn" data-wow-delay="0.7s" src="{% static 'img/ebay.png' %}" alt="top gift card trading app in nigeria">
                     </div>
                 </div>
             </div>
             <div class="col-lg-6">
                 <h2 class="mb-4">Top gift card trading app in Nigeria</h2>
-                <p class="mb-4">At Owodex, we pride ourselves as the leading gift card trading platform in Nigeria. Whether you're looking for Amazon, iTunes, Google Play, or any other major retailer, with us you can sell gift cards at best rates and get fast payments.</p>
+                <p class="mb-4">At Owodex, we pride ourselves as the leading gift card trading platform in Nigeria. Whether you're looking for Amazon, iTunes, Google Play, or any other major retailer, with us you can sell gift cards at best rates in Nigeria and get fast payments.</p>
                 <p class="mb-4">Experience lightning-fast transactions with Owodex's cutting-edge platform. Our optimized system boasts incredibly short loading times, allowing you to buy, sell, or redeem gift cards for cash in a matter of seconds.</p>
                 <div class="row g-4 mb-4">
                     <div class="col-sm-6">
@@ -253,7 +266,7 @@
                 <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
                 <p>Owodex is the best platform to sell gift card in Nigeria. They've got the highest rate and pay very fast too ❤️️</p>
                 <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-1.jpg' %}" alt="Sell Gift Cards at Best Rates" style="width: 50px; height: 50px;">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-1.jpg' %}" alt="Sell Gift Cards at Best Rates in Nigeria" style="width: 50px; height: 50px;">
                     <div class="ps-3">
                         <h5 class="mb-1">Pamilerin Adekunle</h5>
                     </div>
@@ -261,9 +274,9 @@
             </div>
             <div class="testimonial-item bg-transparent border rounded p-4">
                 <i class="fa fa-quote-left fa-2x text-primary mb-3"></i>
-                <p>My experience with Owodex has been very positive. I sell my gift cards at best rates from my <a href="https://fiverr.com" style="text-decoration: none; color: inherit">foreign job.</a></p>
+                <p>My experience with Owodex has been very positive. I sell my gift cards at best rates in Nigeria from my <a href="https://fiverr.com" style="text-decoration: none; color: inherit">foreign job.</a></p>
                 <div class="d-flex align-items-center">
-                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-2.jpg' %}" alt="Sell Gift Cards at Best Rates" style="width: 50px; height: 50px;">
+                    <img class="img-fluid flex-shrink-0 rounded-circle" src="{% static 'img/testimonial-2.jpg' %}" alt="Sell Gift Cards at Best Rates in Nigeria" style="width: 50px; height: 50px;">
                     <div class="ps-3">
                         <h5 class="mb-1">Emmanuel Johnson</h5>
                     

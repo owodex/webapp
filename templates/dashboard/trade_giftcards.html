@@ -7,7 +7,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="card-title text-center mb-4">Trade Gift Card</h2>
+                    <h2 class="card-title text-center mb-4">Sell Gift Card</h2>
                     <div class="text-center mb-4">
                         <img id="giftcardImage" src="{{ giftcard.image.url }}" alt="{{ giftcard.name }} Gift Card" class="img-fluid" style="max-height: 200px;">
                     </div>
@@ -21,12 +21,12 @@
                 <form id="tradeGiftcardForm" method="post" enctype="multipart/form-data" action="{% url 'trade_giftcard' giftcard_id=giftcard.id %}">
                     {% csrf_token %}
                     <input type="hidden" id="giftcard_name" name="giftcard_name" value="{{ giftcard.name }}">
-                    
+
                     <div class="mb-4">
                         <label for="giftcard_name_display" class="form-label">Gift Card Name</label>
                         <input type="text" id="giftcard_name_display" class="form-control form-control-lg" value="{{ giftcard.name }}" readonly>
                     </div>
-                
+
                     <div class="mb-4">
                         <label for="giftCardCurrency" class="form-label">Gift Card Currency</label>
                         <select id="giftCardCurrency" name="giftCardCurrency" class="form-select form-select-lg">
@@ -36,7 +36,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                
+
                     <div class="mb-4">
                         <label for="giftCardType" class="form-label">Gift Card Type</label>
                         <select id="giftCardType" name="giftCardType" class="form-select form-select-lg">
@@ -46,7 +46,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                
+
                     <div class="mb-1">
                         <label for="denomination" class="form-label">Denomination</label>
                         <select id="denomination" name="denomination" class="form-select form-select-lg">
@@ -57,10 +57,14 @@
                         </select>
                     </div>
 
-                    <p id="currentRateDisplay" class="text-start mb-4 ps-2" style="display: none; color: #FEA116";>
+                    <p id="currentRateDisplay" class="text-start mb-4 ps-2" style="display: none; color: #FEA116;">
                         <b>our rate: ₦<span id="rateValue"></span>/$</b>
+                        <br>
+                        <small id="rateNotice" style="color: #666565; font-size: smaller; display: none;">
+                            *Please use livechat to talk to an agent in order to get updated rate*
+                        </small>
                     </p>
-                
+
                     <div class="mb-4">
                         <label for="amount" class="form-label">Enter Amount to send</label>
                         <div class="input-group">
@@ -68,14 +72,14 @@
                             <input type="number" id="amount" name="amount" class="form-control form-control-lg" placeholder="0">
                         </div>
                     </div>
-                
+
                     <div class="mb-4">
                         <label for="giftCardImages" class="form-label">Upload Gift Card Images</label>
                         <input type="file" id="giftCardImages" name="giftCardImages" class="form-control form-control-lg" accept="image/*" multiple>
                     </div>
-                
+
                     <div id="imagePreview" class="mb-4"></div>
-                
+
                     <button type="submit" class="btn btn-primary btn-lg w-100">Trade Gift Card</button>
                 </form>
             </div>
@@ -175,7 +179,7 @@
                 <p><strong>Currency:</strong> ${document.getElementById('giftCardCurrency').options[document.getElementById('giftCardCurrency').selectedIndex].text}</p>
                 <p><strong>Type:</strong> ${document.getElementById('giftCardType').value}</p>
                 <p><strong>Denomination:</strong> ${document.getElementById('denomination').value}</p>
-                <p><strong>Amount:</strong> ₦${document.getElementById('amount').value}</p>
+                <p><strong>Amount:</strong> $${document.getElementById('amount').value}</p>
             `;
 
             const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -190,76 +194,58 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('tradeGiftcardForm');
-        const rateDisplay = document.getElementById('currentRateDisplay');
-        const rateValue = document.getElementById('rateValue');
-        const giftCardCurrency = document.getElementById('giftCardCurrency');
-        const giftCardType = document.getElementById('giftCardType');
-        const denomination = document.getElementById('denomination');
-        const giftcardNameInput = document.getElementById('giftcard_name_display');
+    const form = document.getElementById('tradeGiftcardForm');
+    const rateDisplay = document.getElementById('currentRateDisplay');
+    const rateValue = document.getElementById('rateValue');
+    const rateNotice = document.getElementById('rateNotice');
+    const giftCardCurrency = document.getElementById('giftCardCurrency');
+    const giftCardType = document.getElementById('giftCardType');
+    const denomination = document.getElementById('denomination');
+    const giftcardNameInput = document.getElementById('giftcard_name_display');
 
-        function updateRate() {
-            const giftcardName = giftcardNameInput.value;
-            const currencyId = giftCardCurrency.value;
-            const typeId = giftCardType.value;
-            const denominationId = denomination.value;
+    function updateRate() {
+        const giftcardName = giftcardNameInput.value;
+        const currencyId = giftCardCurrency.value;
+        const typeId = giftCardType.value;
+        const denominationId = denomination.value;
 
-            console.log('Updating rate with:', { giftcardName, currencyId, typeId, denominationId });
+        if (giftcardName && currencyId && typeId && denominationId) {
+            const url = `/api/get-rate/?giftcard=${encodeURIComponent(giftcardName)}&currency=${currencyId}&type=${typeId}&denomination=${denominationId}`;
 
-            if (giftcardName && currencyId && typeId && denominationId) {
-                rateDisplay.style.display = 'block';
-
-                const url = `/api/get-rate/?giftcard=${encodeURIComponent(giftcardName)}&currency=${currencyId}&type=${typeId}&denomination=${denominationId}`;
-                console.log('Fetching rate from:', url);
-
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Received data:', data);
-                        if (data.rate) {
-                            rateValue.innerText = data.rate;
-                            rateDisplay.style.display = 'block';
-                            
-                            // Update other display elements if needed
-                            const currencyDisplay = document.getElementById('currencyDisplay');
-                            if (currencyDisplay) {
-                                currencyDisplay.textContent = data.currency;
-                            }
-                            
-                            const typeDisplay = document.getElementById('typeDisplay');
-                            if (typeDisplay) {
-                                typeDisplay.textContent = data.type;
-                            }
-                            
-                            const denominationDisplay = document.getElementById('denominationDisplay');
-                            if (denominationDisplay) {
-                                denominationDisplay.textContent = data.denomination;
-                            }
-                        } else {
-                            rateDisplay.textContent = 'Rate not available';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching rate:', error);
-                        rateDisplay.textContent = 'Error fetching rate';
-                    });
-            } else {
-                rateDisplay.style.display = 'none';
-            }
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.rate) {
+                        rateValue.innerText = data.rate;
+                        rateDisplay.style.display = 'block';
+                        if (rateNotice) rateNotice.style.display = 'inline';
+                    } else {
+                        rateDisplay.textContent = 'Rate not available';
+                        if (rateNotice) rateNotice.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    rateDisplay.textContent = 'Error fetching rate';
+                    if (rateNotice) rateNotice.style.display = 'none';
+                });
+        } else {
+            rateDisplay.style.display = 'none';
+            if (rateNotice) rateNotice.style.display = 'none';
         }
+    }
 
-        // Add event listeners to trigger rate update
-        giftCardCurrency.addEventListener('change', updateRate);
-        giftCardType.addEventListener('change', updateRate);
-        denomination.addEventListener('change', updateRate);
+    // Add event listeners to trigger rate update
+    giftCardCurrency.addEventListener('change', updateRate);
+    giftCardType.addEventListener('change', updateRate);
+    denomination.addEventListener('change', updateRate);
 
-        // Initial call to set up the rate display
-        updateRate();
-    });
+    // Initial call to set up the rate display
+    updateRate();
+});
 </script>
 {% endblock %}

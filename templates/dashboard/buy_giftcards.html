@@ -1,0 +1,292 @@
+{% extends 'dashboard/main.html' %}
+{% load static %}
+
+{% block maincontent %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Buy Gift Card</h2>
+                    <div class="text-center mb-4">
+                        <img id="giftcardImage" src="{{ giftcard.image.url }}" alt="{{ giftcard.name }} Gift Card" class="img-fluid" style="max-height: 200px;">
+                    </div>
+                </div>
+                {% if error_message %}
+                <div class="alert alert-danger">
+                    {{ error_message }}
+                </div>
+                {% endif %}
+
+                <form id="buyGiftcardForm" method="post" enctype="multipart/form-data" action="{% url 'buy_giftcard' giftcard_id=giftcard.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="giftcard_name" name="giftcard_name" value="{{ giftcard.name }}">
+                    
+                    <div class="mb-4">
+                        <label for="giftcard_name_display" class="form-label">Gift Card Name</label>
+                        <input type="text" id="giftcard_name_display" class="form-control form-control-lg" value="{{ giftcard.name }}" readonly>
+                    </div>
+                
+                    <div class="mb-4">
+                        <label for="giftCardCurrency" class="form-label">Gift Card Currency</label>
+                        <select id="giftCardCurrency" name="giftCardCurrency" class="form-select form-select-lg">
+                            <option value="">Select Currency</option>
+                            {% for currency in currencies %}
+                                <option value="{{ currency.currency }}">{{ currency.currency_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <div class="mb-4">
+                        <label for="giftCardType" class="form-label">Gift Card Type</label>
+                        <select id="giftCardType" name="giftCardType" class="form-select form-select-lg">
+                            <option value="">Select Type</option>
+                            {% for type in types %}
+                                <option value="{{ type.type }}">{{ type.type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
+                    <div class="mb-1">
+                        <label for="denomination" class="form-label">Denomination</label>
+                        <select id="denomination" name="denomination" class="form-select form-select-lg">
+                            <option value="">Select Denomination</option>
+                            {% for denomination in denominations %}
+                                <option value="{{ denomination.value }}">{{ denomination.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <p id="currentRateDisplay" class="text-start mb-4 ps-2" style="display: none; color: #FEA116;">
+                        <b>our rate: ₦<span id="rateValue"></span>/$</b>
+                        <br>
+                        <small id="rateNotice" style="color: #666565; font-size: smaller; display: none;">
+                            *Please use livechat to talk to an agent in order to get updated rate*
+                        </small>
+                    </p>
+                
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Enter Amount to send</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="amount" name="amount" class="form-control form-control-lg" placeholder="0">
+                        </div>
+                    </div>
+                
+                    <div class="mb-4">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email" placeholder="Enter your email address" required>
+                    </div>
+                
+                    <div id="imagePreview" class="mb-4"></div>
+                
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Buy Gift Card</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Trade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmationModalBody">
+                <!-- Content will be dynamically populated -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmTradeBtn">Confirm Trade</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-white bg-opacity-75 d-none">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('buyGiftcardForm');
+    let allowSubmit = false; // Prevents modal loop
+    let currentRate = 0; // Store the fetched rate
+
+    // --- Rate fetching logic ---
+    const rateDisplay = document.getElementById('currentRateDisplay');
+    const rateValue = document.getElementById('rateValue');
+    const rateNotice = document.getElementById('rateNotice');
+    const giftCardCurrency = document.getElementById('giftCardCurrency');
+    const giftCardType = document.getElementById('giftCardType');
+    const denomination = document.getElementById('denomination');
+    const giftcardNameInput = document.getElementById('giftcard_name_display');
+
+    function updateRate() {
+        const giftcardName = giftcardNameInput.value;
+        const currencyId = giftCardCurrency.value;
+        const typeId = giftCardType.value;
+        const denominationId = denomination.value;
+
+        if (giftcardName && currencyId && typeId && denominationId) {
+            const url = `/api/get-rate/?giftcard=${encodeURIComponent(giftcardName)}&currency=${currencyId}&type=${typeId}&denomination=${denominationId}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    currentRate = data.rate || 0;
+                    if (data.rate) {
+                        rateValue.innerText = data.rate;
+                        rateDisplay.style.display = 'block';
+                        if (rateNotice) rateNotice.style.display = 'inline';
+                    } else {
+                        rateDisplay.style.display = 'none';
+                        if (rateNotice) rateNotice.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    rateDisplay.style.display = 'none';
+                    if (rateNotice) rateNotice.style.display = 'none';
+                    currentRate = 0;
+                });
+        } else {
+            rateDisplay.style.display = 'none';
+            if (rateNotice) rateNotice.style.display = 'none';
+            currentRate = 0;
+        }
+    }
+
+    giftCardCurrency.addEventListener('change', updateRate);
+    giftCardType.addEventListener('change', updateRate);
+    denomination.addEventListener('change', updateRate);
+    updateRate();
+
+    // --- Form submission and modal logic ---
+    form.addEventListener('submit', function(e) {
+        if (!allowSubmit) {
+            e.preventDefault();
+
+            // Validation
+            const amount = document.getElementById('amount');
+            const email = document.getElementById('email');
+
+            if (
+                giftCardCurrency.value === '' ||
+                giftCardType.value === '' ||
+                denomination.value === '' ||
+                amount.value === '' ||
+                email.value === ''
+            ) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            // Calculate total
+            const total = (parseFloat(amount.value) * currentRate) || 0;
+
+            // Show confirmation modal
+            const modalBody = document.getElementById('confirmationModalBody');
+            modalBody.innerHTML = `
+                <p><strong>Gift Card:</strong> ${giftcardNameInput.value}</p>
+                <p><strong>Currency:</strong> ${giftCardCurrency.options[giftCardCurrency.selectedIndex].text}</p>
+                <p><strong>Type:</strong> ${giftCardType.value}</p>
+                <p><strong>Denomination:</strong> ${denomination.value}</p>
+                <p><strong>Amount:</strong> $${amount.value}</p>
+                <p><strong>Total:</strong> ₦${total.toLocaleString()}</p>
+                <p><strong>Email:</strong> ${email.value}</p>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            modal.show();
+        }
+    });
+
+    document.getElementById('confirmTradeBtn').addEventListener('click', function() {
+        allowSubmit = true;
+        document.getElementById('loadingIndicator').classList.remove('d-none');
+        form.submit();
+    });
+});
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('buyGiftcardForm');
+        const rateDisplay = document.getElementById('currentRateDisplay');
+        const rateValue = document.getElementById('rateValue');
+        const giftCardCurrency = document.getElementById('giftCardCurrency');
+        const giftCardType = document.getElementById('giftCardType');
+        const denomination = document.getElementById('denomination');
+        const giftcardNameInput = document.getElementById('giftcard_name_display');
+
+        function updateRate() {
+            const giftcardName = giftcardNameInput.value;
+            const currencyId = giftCardCurrency.value;
+            const typeId = giftCardType.value;
+            const denominationId = denomination.value;
+
+            console.log('Updating rate with:', { giftcardName, currencyId, typeId, denominationId });
+
+            if (giftcardName && currencyId && typeId && denominationId) {
+                rateDisplay.style.display = 'block';
+
+                const url = `/api/get-rate/?giftcard=${encodeURIComponent(giftcardName)}&currency=${currencyId}&type=${typeId}&denomination=${denominationId}`;
+                console.log('Fetching rate from:', url);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Received data:', data);
+                        if (data.rate) {
+                            rateValue.innerText = data.rate;
+                            rateDisplay.style.display = 'block';
+                            
+                            // Update other display elements if needed
+                            const currencyDisplay = document.getElementById('currencyDisplay');
+                            if (currencyDisplay) {
+                                currencyDisplay.textContent = data.currency;
+                            }
+                            
+                            const typeDisplay = document.getElementById('typeDisplay');
+                            if (typeDisplay) {
+                                typeDisplay.textContent = data.type;
+                            }
+                            
+                            const denominationDisplay = document.getElementById('denominationDisplay');
+                            if (denominationDisplay) {
+                                denominationDisplay.textContent = data.denomination;
+                            }
+                        } else {
+                            rateDisplay.textContent = 'Rate not available';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching rate:', error);
+                        rateDisplay.textContent = 'Error fetching rate';
+                    });
+            } else {
+                rateDisplay.style.display = 'none';
+            }
+        }
+
+        // Add event listeners to trigger rate update
+        giftCardCurrency.addEventListener('change', updateRate);
+        giftCardType.addEventListener('change', updateRate);
+        denomination.addEventListener('change', updateRate);
+
+        // Initial call to set up the rate display
+        updateRate();
+    });
+</script>
+{% endblock %}

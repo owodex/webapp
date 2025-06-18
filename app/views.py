@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password, check_password
-from .models import CustomUser, Transaction, Notification, GiftCard, GiftCardRate, GiftCardCurrency, GiftCardType, GiftCardDenomination, GiftCardImage, GiftCardTransaction, ElectricityRequest, CableRequest, AirtimeRequest, DataRequest, Wallet, Beneficiary
+from .models import *
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
@@ -106,16 +106,16 @@ def user_settings(request):
             user.last_name = ' '.join(request.POST.get('full_name').split()[1:])
             user.email = request.POST.get('email')
             user.phone_number = request.POST.get('phone_number')
-            
+
             if 'profile_image' in request.FILES:
                 user.profile_image = request.FILES['profile_image']
-            
+
             user.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('settings')
     else:
         password_form = PasswordChangeForm(request.user)
-    
+
     return render(request, 'dashboard/settings.html', {'password_form': password_form})
 
 @login_required
@@ -131,7 +131,7 @@ def delete_account(request):
             user.delete()
             logout(request)
             return JsonResponse({
-                'success': True, 
+                'success': True,
                 'message': 'Your account has been successfully deleted.',
                 'redirect_url': reverse('home')
             })
@@ -256,20 +256,20 @@ def user_login(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-        
+
         if email and password:
             user = authenticate(request, email=email, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('dashboard') 
+                return redirect('dashboard')
             else:
                 messages.error(request, 'Invalid email or password.')
         else:
             messages.error(request, 'Please provide both email and password.')
-        
+
         # For debugging: print the POST data
         print("POST data:", request.POST)
-    
+
     return render(request, 'login.html')
 
 def rate_calculator(request):
@@ -282,19 +282,20 @@ def terms(request):
 def privacy_policy(request):
     return render(request, "privacy_policy.html")
 
-from .models import Wallet  
+from .models import Wallet
 
 @login_required
 def dashboard(request):
     recent_transactions = Transaction.objects.filter(user=request.user).order_by('-date')[:5]
-
     wallet, created = Wallet.objects.get_or_create(user=request.user)
-
+    user_notifications = Notification.objects.filter(users=request.user).order_by('-created_at')[:10]
+    unread_notification_count = Notification.objects.filter(users=request.user, is_read=False).count()
     context = {
         'recent_transactions': recent_transactions,
         'wallet_balance': wallet.balance,
+        'user_notifications': user_notifications,
+        'unread_notification_count': unread_notification_count,
     }
-
     return render(request, 'dashboard/index.html', context)
 
 
@@ -304,7 +305,7 @@ def services(request):
 @login_required
 def transactions(request):
     transactions_list = Transaction.objects.filter(user=request.user)
-    paginator = Paginator(transactions_list, 20) 
+    paginator = Paginator(transactions_list, 20)
 
     page_number = request.GET.get('page')
     transactions = paginator.get_page(page_number)
@@ -331,11 +332,11 @@ def pay_bills(request):
 @login_required
 def bonus(request):
     user = request.user
-    
+
     signup_bonus = Transaction.objects.filter(user=user, service='Signup Bonus').first()
-    
+
     referral_bonuses = Transaction.objects.filter(user=user, service='Referral Bonus').order_by('-date')
-    
+
     total_bonus = user.bonus_amount
 
     total_referral_bonus = referral_bonuses.aggregate(Sum('amount'))['amount__sum'] or 0
@@ -350,7 +351,7 @@ def bonus(request):
         'total_referral_bonus': total_referral_bonus,
         'user_eligible': user_eligible,
     }
-    
+
     return render(request, 'dashboard/bonus.html', context)
 
 logger = logging.getLogger(__name__)
@@ -359,15 +360,15 @@ logger = logging.getLogger(__name__)
 def withdraw_bonus(request):
     user = request.user
     total_bonus = user.bonus_amount
-    
+
     if total_bonus <= 0:
         return JsonResponse({'success': False, 'error': 'No bonus available for withdrawal.'})
 
     total_giftcard_transactions = GiftCardTransaction.objects.filter(user=user, status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
-    
-    
+
+
     logger.info(f"User {user.id} - Total giftcard transactions: {total_giftcard_transactions}")
-    
+
     if total_giftcard_transactions < 100000:
         error_message = (f"You need to complete a giftcard transaction of at least ₦100,000 to withdraw bonus. "
                          f"Your current total: ₦{total_giftcard_transactions}")
@@ -441,7 +442,7 @@ def owodex_tag_transfer(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid amount'}, status=400)
 
     sender_wallet, _ = Wallet.objects.get_or_create(user=request.user)
-    
+
     if sender_wallet.balance < amount:
         return JsonResponse({'status': 'error', 'message': 'Insufficient balance'}, status=400)
 
@@ -733,7 +734,7 @@ def get_beneficiaries(request):
 
 #         # Get variation details
 #         variations_response = vtpass_api.get_data_variation_codes(network)
-        
+
 #         if not variations_response or 'content' not in variations_response:
 #             return JsonResponse(variations_response or {'status': 'error', 'message': 'Failed to fetch variations'}, status=400)
 
@@ -791,7 +792,7 @@ def get_beneficiaries(request):
 #                 'transaction_id': api_response.get('requestId'),
 #                 'vtpass_response': api_response
 #             }
-            
+
 #             # Return the exact response from VTPass
 #             return JsonResponse(response_data)
 #         else:
@@ -904,7 +905,7 @@ def submit_data_request(request):
         # Fetch plan details
         data_plans_response = get_data_plans(request)
         data_plans_data = json.loads(data_plans_response.content)
-        
+
         if data_plans_data['status'] == 'success':
             data_plans = data_plans_data['data']
             selected_plan = next((plan for plan in data_plans if plan['plan_code'] == plan_code), None)
@@ -986,7 +987,7 @@ logger = logging.getLogger(__name__)
 
 class SquadAPI:
     BASE_URL = "https://api-d.squadco.com"
-    
+
     def __init__(self):
         self.headers = {
             "Authorization": f"Bearer {settings.SQUADCO_SECRET_KEY}",
@@ -996,7 +997,7 @@ class SquadAPI:
     def get_data_bundles(self, network):
         url = f"{self.BASE_URL}/vending/data-bundles"
         params = {"network": network}
-        
+
         try:
             logger.info(f"Sending request to Squadco API: URL={url}, Params={params}")
             response = requests.get(url, headers=self.headers, params=params)
@@ -1055,8 +1056,8 @@ def submit_cable_request(request):
     package = request.POST.get('package')
     account_name = request.POST.get('account_name')
     amount = request.POST.get('amount')
-    subscription_type = request.POST.get('subscription_type', 'change') 
-  
+    subscription_type = request.POST.get('subscription_type', 'change')
+
     invoice_id = str(uuid.uuid4().hex)[:20]
 
     if not all([provider, smart_card_number, package, account_name, amount]):
@@ -1118,7 +1119,7 @@ def submit_cable_request(request):
                     return JsonResponse({
                         'status': 'success',
                         'message': 'Cable subscription successful',
-                        'transaction_id': new_transaction.invoice_id 
+                        'transaction_id': new_transaction.invoice_id
                     })
 
                 CableRequest.objects.create(
@@ -1225,7 +1226,7 @@ def trade_giftcard(request, giftcard_id):
         'types': types,
         'denominations': denominations,
     }
-        
+
     if request.method == 'POST':
         giftcard_name = request.POST.get('giftcard_name')
         currency = request.POST.get('giftCardCurrency')
@@ -1253,12 +1254,24 @@ def trade_giftcard(request, giftcard_id):
             invoice_id=invoice_id
         )
 
+        currency_code = request.POST.get('giftCardCurrency')
+        card_type_code = request.POST.get('giftCardType')
+
+        try:
+            currency_obj = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency_code)
+            card_type_obj = GiftCardType.objects.get(giftcard=giftcard, type=card_type_code)
+        except (GiftCardCurrency.DoesNotExist, GiftCardType.DoesNotExist):
+            return render(request, 'dashboard/trade_giftcards.html', {
+                'error_message': 'Invalid currency or card type selected.',
+                'form_data': request.POST
+            })
+
         giftcard_transaction = GiftCardTransaction.objects.create(
             user=request.user,
             transaction=transaction,
             giftcard_name=giftcard_name,
-            currency=currency,
-            card_type=card_type,
+            currency=currency_obj,
+            card_type=card_type_obj,
             denomination=denomination,
             amount=amount
         )
@@ -1273,6 +1286,121 @@ def trade_giftcard(request, giftcard_id):
 
     return render(request, 'dashboard/trade_giftcards.html', context)
 
+@login_required
+def buy_giftcard(request, giftcard_id):
+    giftcard = get_object_or_404(GiftCard, id=giftcard_id)
+    currencies = GiftCardCurrency.objects.filter(giftcard=giftcard)
+    types = GiftCardType.objects.filter(giftcard=giftcard)
+    denominations = GiftCardDenomination.objects.filter(giftcard=giftcard)
+
+    context = {
+        'giftcard': giftcard,
+        'currencies': currencies,
+        'types': types,
+        'denominations': denominations,
+    }
+
+    if request.method == 'POST':
+        giftcard_name = request.POST.get('giftcard_name')
+        currency = request.POST.get('giftCardCurrency')
+        card_type = request.POST.get('giftCardType')
+        denomination = request.POST.get('denomination')
+        amount = request.POST.get('amount')
+        email = request.POST.get('email')
+
+        try:
+            amount = Decimal(amount)
+        except InvalidOperation:
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': 'Invalid amount provided. Please enter a valid number.',
+                'form_data': request.POST,
+                **context
+            })
+
+        # Fetch the rate for the selected options
+        try:
+            currency_obj = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency)
+            card_type_obj = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
+            denomination_obj = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination)
+            rate_obj = GiftCardRate.objects.get(
+                giftcard=giftcard,
+                currency=currency_obj,
+                card_type=card_type_obj,
+                denomination=denomination_obj
+            )
+            rate = Decimal(rate_obj.rate)
+        except (GiftCardCurrency.DoesNotExist, GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist, GiftCardRate.DoesNotExist):
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': 'Invalid gift card selection. Please try again.',
+                'form_data': request.POST,
+                **context
+            })
+
+        total = rate * amount
+
+        # Deduct from user's wallet
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        if wallet.balance < total:
+            return render(request, 'dashboard/buy_giftcards.html', {
+                'error_message': f'Insufficient wallet balance. You need ₦{total}, but you have ₦{wallet.balance}.',
+                'form_data': request.POST,
+                **context
+            })
+
+        # Deduct and save
+        wallet.balance -= total
+        wallet.save()
+
+        invoice_id = str(uuid.uuid4().hex)[:20]
+
+        transaction = Transaction.objects.create(
+            user=request.user,
+            amount=total,
+            service='buy_giftcard',
+            status='pending',
+            transaction_type='debit',
+            invoice_id=invoice_id,
+            email=email,
+        )
+
+        # You can save more details if needed
+
+        messages.success(request, 'Gift card buy request submitted successfully!')
+        return redirect('giftcards')
+
+    return render(request, 'dashboard/buy_giftcards.html', context)
+
+@login_required
+@csrf_exempt
+def submit_deposit(request):
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        proof = request.FILES.get('proof')
+        if not amount or not proof:
+            return JsonResponse({'success': False, 'message': 'Amount and proof are required.'}, status=400)
+        try:
+            amount = Decimal(amount)
+        except Exception:
+            return JsonResponse({'success': False, 'message': 'Invalid amount.'}, status=400)
+
+        deposit = DepositRequest.objects.create(
+            user=request.user,
+            amount=amount,
+            proof=proof,
+            status='pending'
+        )
+        # Create a pending transaction
+        Transaction.objects.create(
+            user=request.user,
+            amount=amount,
+            service='deposit',
+            status='pending',
+            transaction_type='credit',
+            invoice_id=f'DEP{deposit.id}{int(deposit.created_at.timestamp())}'
+        )
+        return JsonResponse({'success': True, 'message': 'Deposit submitted. Awaiting approval.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=400)
+
 def search(request):
     query = request.GET.get('q', '').lower()
     if query:
@@ -1280,9 +1408,9 @@ def search(request):
         service_urls = {
             'airtime': reverse('airtime_data'),
             'data': reverse('airtime_data'),
-            'cable': reverse('pay_bills'), 
-            'tv': reverse('pay_bills'),    
-            'electricity': reverse('pay_bills'),  
+            'cable': reverse('pay_bills'),
+            'tv': reverse('pay_bills'),
+            'electricity': reverse('pay_bills'),
             'giftcard': reverse('giftcards'),
             'gift card': reverse('giftcards'),
             'transfer': reverse('bank_transfer'),
@@ -1320,13 +1448,13 @@ def search(request):
 #         return JsonResponse(response.json())
 #     except requests.RequestException as e:
 #         return JsonResponse({'error': str(e)}, status=500)
-    
+
 def get_cable_variations(request, provider):
     url = f"https://vtpass.com/api/service-variations?serviceID={provider}"
     auth = (settings.VTPASS_EMAIL, settings.VTPASS_PASSWORD)
-    
+
     response = requests.get(url, auth=auth)
-    
+
     if response.status_code == 200:
         return JsonResponse(response.json())
     else:
@@ -1363,7 +1491,7 @@ def validate_smart_card(request):
         error_message = validation_result.get('response_description')
         logger.error(f"Smart card validation failed: {error_message}")
         return JsonResponse({'status': 'error', 'message': error_message}, status=400)
-    
+
 @require_POST
 @csrf_exempt
 def verify_meter(request):
@@ -1385,14 +1513,14 @@ def verify_meter(request):
             'account_name': content.get('Customer_Name') or content.get('customerName') or 'N/A',
             'address': content.get('Address') or content.get('customerAddress') or 'N/A',
             'meter_number': content.get('Meter_Number') or content.get('meterNumber') or meter_number,
-            'customer_details': content  
+            'customer_details': content
         })
     else:
         error_message = response.get('response_description') or 'Verification failed'
         logger.error(f"Meter verification failed: {error_message}")
         return JsonResponse({
             'error': error_message,
-            'details': response  
+            'details': response
         }, status=400)
 
 @login_required
@@ -1410,40 +1538,47 @@ def mark_all_notifications_read(request):
 def get_rate(request):
     giftcard_name = request.GET.get('giftcard')
     currency_code = request.GET.get('currency')
-    card_type = request.GET.get('type')
+    card_type_code = request.GET.get('type')
     denomination_value = request.GET.get('denomination')
 
     try:
         giftcard = GiftCard.objects.get(name=giftcard_name)
-
         currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency=currency_code)
-        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type)
+        card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type_code)
         denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
 
-        rate = GiftCardRate.objects.get(
-            giftcard=giftcard,
-            currency=currency,
-            card_type=card_type,
-            denomination=denomination
-        )
+        try:
+            rate = GiftCardRate.objects.get(
+                giftcard=giftcard,
+                currency=currency,
+                card_type=card_type,
+                denomination=denomination
+            ).rate
+        except GiftCardRate.DoesNotExist:
+            # Set your default rates here
+            if card_type.type.lower() == "e-code":
+                rate = Decimal(1000)
+            elif card_type.type.lower() == "physical":
+                rate = Decimal(1120)
+            else:
+                rate = Decimal(900)
 
         return JsonResponse({
-            'rate': rate.rate,
+            'rate': str(rate),
             'giftcard': giftcard.name,
             'currency': currency.currency_name,
             'type': card_type.type,
             'denomination': denomination.value
         })
-    except (GiftCard.DoesNotExist, GiftCardCurrency.DoesNotExist, 
-            GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist, 
-            GiftCardRate.DoesNotExist) as e:
+    except (GiftCard.DoesNotExist, GiftCardCurrency.DoesNotExist,
+            GiftCardType.DoesNotExist, GiftCardDenomination.DoesNotExist) as e:
         return JsonResponse({'error': str(e)}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
 def get_gift_cards(request):
     """Fetches all available gift cards."""
-    gift_cards = GiftCard.objects.values('id', 'name')  
+    gift_cards = GiftCard.objects.values('id', 'name')
     return JsonResponse(list(gift_cards), safe=False)
 
 def get_currencies(request):
@@ -1459,15 +1594,15 @@ def get_card_types(request):
 def get_denominations(request):
     giftcard_id = request.GET.get('giftcard_id')
     denominations = GiftCardDenomination.objects.filter(giftcard_id=giftcard_id).values('id', 'value')
-    return JsonResponse(list(denominations), safe=False)      
+    return JsonResponse(list(denominations), safe=False)
 
 @require_GET
 def get_g_rate(request):
     giftcard_name = request.GET.get('giftcard')
-    currency_name = request.GET.get('currency') 
+    currency_name = request.GET.get('currency')
     card_type_name = request.GET.get('type')
     denomination_value = request.GET.get('denomination')
-    amount = request.GET.get('amount', 1) 
+    amount = request.GET.get('amount', 1)
 
     if not all([giftcard_name, currency_name, card_type_name, denomination_value]):
         return JsonResponse({'error': 'Missing required parameters'}, status=400)
@@ -1476,23 +1611,33 @@ def get_g_rate(request):
         amount = float(amount)
 
         giftcard = GiftCard.objects.get(name=giftcard_name)
-        
+
         # Lookup by currency_name instead of currency
         currency = GiftCardCurrency.objects.get(giftcard=giftcard, currency_name__iexact=currency_name)
         card_type = GiftCardType.objects.get(giftcard=giftcard, type=card_type_name)
         denomination = GiftCardDenomination.objects.get(giftcard=giftcard, value=denomination_value)
-        rate_obj = GiftCardRate.objects.get(
-            giftcard=giftcard, currency=currency, card_type=card_type, denomination=denomination
-        )
 
-        rate = float(rate_obj.rate)
+        try:
+            rate_obj = GiftCardRate.objects.get(
+                giftcard=giftcard, currency=currency, card_type=card_type, denomination=denomination
+            )
+            rate = float(rate_obj.rate)
+        except GiftCardRate.DoesNotExist:
+            # Set your default rates here
+            if card_type.type.lower() == "e-code":
+                rate = 1000.0
+            elif card_type.type.lower() == "physical":
+                rate = 1120.0
+            else:
+                rate = 900.0
+
         total_value = round(rate * amount, 2)
 
         return JsonResponse({
             'rate': rate,
             'total_value': total_value,
             'giftcard': giftcard.name,
-            'currency': currency.currency_name, 
+            'currency': currency.currency_name,
             'type': card_type.type,
             'denomination': denomination.value
         })
@@ -1521,7 +1666,7 @@ def get_g_rate(request):
 
 def blog_list(request):
     posts = Post.objects.all().order_by('-created_at')
-    paginator = Paginator(posts, 9) 
+    paginator = Paginator(posts, 9)
     page = request.GET.get('page')
     try:
         posts = paginator.page(page)
@@ -1529,7 +1674,7 @@ def blog_list(request):
         posts = paginator.page(1)
     except EmptyPage:
         posts = paginator.page(paginator.num_pages)
-    
+
     context = {
         'posts': posts,
         'categories': Category.objects.all(),
@@ -1541,7 +1686,7 @@ def blog_detail(request, slug):
     post = get_object_or_404(Post, slug=slug)
     related_posts = Post.objects.filter(category=post.category).exclude(id=post.id)[:2]
     recent_posts = Post.objects.exclude(id=post.id).order_by('-created_at')[:3]
-    
+
     context = {
         'post': post,
         'related_posts': related_posts,
